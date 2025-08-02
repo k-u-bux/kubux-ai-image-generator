@@ -518,7 +518,8 @@ class FullscreenImageViewer(tk.Toplevel):
         w, h = self.get_aspect_ratio( self.master.image_scale )
         self.title(f"set aspect ratio = {w} x {h}")
         # print(f"geometry = {self.geometry()}")
-        self.master.image_win_geometry = self.geometry()
+        if not self.is_fullscreen:
+            self.master.image_win_geometry = self.geometry()
         
         if not self.original_image:
             return
