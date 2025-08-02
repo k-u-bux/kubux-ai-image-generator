@@ -2,7 +2,7 @@
 
 A streamlined, user-friendly desktop application for generating AI images using Together.ai's image generation models. Create high-quality, custom images directly from text prompts with precise control over dimensions and generation parameters.
 
-![Screenshot of kubux-ai-image-generator](https://example.com/screenshot.png)
+![Screenshot of kubux-ai-image-generator](screenshots/ai-generator.png)
 
 ## Features
 
