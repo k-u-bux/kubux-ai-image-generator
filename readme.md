@@ -120,7 +120,3 @@ The application is designed for Linux desktop environments and includes automati
 - XFCE
 - Cinnamon
 - MATE
-
-### Font Detection
-
-The `probe_font.py` module provides automatic UI font detection across Linux desktop environments to ensure the application matches your system's look and feel.
