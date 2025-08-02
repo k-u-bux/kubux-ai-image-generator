@@ -136,6 +136,7 @@
 	    echo "A symlink to the actual python interpreter is provided for PyCharm"
 	    cleanup() {
 	        echo "Cleaning up development environment..."
+		rm -rf __pycache__
 		if [ -L ./python ]; then
       		  rm ./python
     		fi
