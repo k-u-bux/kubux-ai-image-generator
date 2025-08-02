@@ -56,6 +56,7 @@ python kubux-ai-image-generator.py
 2. Adjust generation settings as needed:
    - **Steps**: Higher values (20-48) for more detailed images, lower values (12-20) for faster generation
    - **Size**: Adjust the scale to control resolution (higher values create larger, more detailed images)
+   - **Aspect**: You adjust the aspect ratio by resizing the image window.
 3. Click "Generate" to create your image
 4. View, zoom and explore your generated image in the viewer
 
