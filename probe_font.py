@@ -2,8 +2,6 @@ import platform
 import subprocess
 import os
 import tkinter.font as tkFont # Assuming you're using Tkinter
-import subprocess
-import os
 
 def get_gtk_ui_font():
     """
