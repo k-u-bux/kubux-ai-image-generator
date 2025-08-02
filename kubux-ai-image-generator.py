@@ -58,15 +58,13 @@ APP_SETTINGS_FILE = os.path.join(CONFIG_DIR, "app_settings.json")
 os.makedirs(DOWNLOAD_DIR, exist_ok=True)
 os.makedirs(CONFIG_DIR, exist_ok=True)
 
-def unique_name(original_path, prompt):
-    key = f"{prompt}"
-    dir_name = hashlib.sha256(key.encode('utf-8')).hexdigest()
+def unique_name(original_path, category):
     _, ext = os.path.splitext(original_path)
     timestamp_str = datetime.now().strftime('%Y-%m-%d-%H-%M-%S-%f')
     random_raw_part = secrets.token_urlsafe(18)
     sanitized_random_part = random_raw_part.replace('/', '_').replace('+', '-')
-    base_name = f"{timestamp_str}_{sanitized_random_part}"
-    return f"{dir_name}/{base_name}{ext}"
+    base_name = f"{timestamp_str}_{category}_{sanitized_random_part}"
+    return f"{base_name}{ext}"
 
 def resize_image(image, target_width, target_height):
     original_width, original_height = image.size
@@ -222,20 +220,25 @@ def generate_image(prompt, width, height,
         error_callback("API Error", message)
         return None
 
-def download_image(url, file_name, error_callback=fallback_show_error):
-    save_path = os.path.join(DOWNLOAD_DIR,file_name)
+def download_image(url, file_name, prompt, error_callback=fallback_show_error):
+    key = f"{prompt}"
+    prompt_dir = hashlib.sha256(key.encode('utf-8')).hexdigest()
+    save_path = os.path.join(DOWNLOAD_DIR,prompt_dir,file_name)
     tmp_save_path = save_path + "-tmp"
     try:
         response = requests.get(url, stream=True)
         response.raise_for_status() 
         dir_name = os.path.dirname(save_path)
-        # print(f"dir_name = {dir_name}")
         os.makedirs(dir_name, exist_ok=True)
-        # print(f"dir_name = {dir_name} created")
+        prompt_file = os.path.join( dir_name, "prompt.txt")
+        try:
+            with open(prompt_file, 'w') as file:
+                file.write(prompt)
+        except IOError as e:
+            print(f"Error writing prompt {prompt} to file: {e}")
         with open(tmp_save_path, 'wb') as f:
             for chunk in response.iter_content(chunk_size=8192): f.write(chunk)
         os.replace(tmp_save_path, save_path)
-        # print(f"file = {save_path} saved")
     except Exception as e:
         try:
             os.remove(tmp_save_path)
@@ -868,8 +871,8 @@ class ImageGenerator(tk.Tk):
                                                                                       message=m,
                                                                                       font=self.main_font))
         if image_url:
-            file_name = unique_name("dummy.png",prompt)
-            save_path = download_image(image_url, file_name,
+            file_name = unique_name("dummy.png","generated")
+            save_path = download_image(image_url, file_name, prompt,
                                        error_callback=lambda t, m : custom_message_dialog(parent=self,
                                                                                           title=t,
                                                                                           message=m,
