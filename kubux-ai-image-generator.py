@@ -228,12 +228,12 @@ def download_image(url, file_name, error_callback=fallback_show_error):
         response = requests.get(url, stream=True)
         response.raise_for_status() 
         dir_name = os.path.dirname(save_path)
-        print(f"dir_name = {dir_name}")
+        # print(f"dir_name = {dir_name}")
         os.makedirs(dir_name, exist_ok=True)
-        print(f"dir_name = {dir_name} created")
+        # print(f"dir_name = {dir_name} created")
         with open(save_path, 'wb') as f:
             for chunk in response.iter_content(chunk_size=8192): f.write(chunk)
-        print(f"file = {save_path} saved")
+        # print(f"file = {save_path} saved")
     except Exception as e:
         os.remove(save_path)
         message = f"Failed to download image: {e}"
@@ -364,6 +364,8 @@ class FullscreenImageViewer(tk.Toplevel):
         try:
             self.original_image = Image.open(self.image_path)
             self._update_image()
+            self.update_idletasks()
+            self._update_image()
         except Exception as e:
             print(f"Error loading image {self.image_path}: {e}")
             self.destroy()
@@ -372,7 +374,7 @@ class FullscreenImageViewer(tk.Toplevel):
         """Update the displayed image based on current zoom and size."""
         w, h = self.get_aspect_ratio( self.master.image_scale )
         self.title(f"set aspect ratio = {w} x {h}")
-        print(f"geometry = {self.geometry()}")
+        # print(f"geometry = {self.geometry()}")
         self.master.image_win_geometry = self.geometry()
         
         if not self.original_image:
