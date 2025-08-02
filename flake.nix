@@ -1,5 +1,5 @@
 {
-  description = "Kubux Wallpaper Generator - AI-powered wallpaper creation tool";
+  description = "Kubux AI Image Generator";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.05";
@@ -61,7 +61,7 @@
       in
       {
         packages.default = pkgs.stdenv.mkDerivation {
-          pname = "kubux-wallpaper-generator";
+          pname = "kubux-ai-image-generator";
           version = "1.0.0";
           
           src = ./.;
@@ -75,28 +75,29 @@
             mkdir -p $out/share/icons/hicolor/{16x16,22x22,24x24,32x32,48x48,64x64,128x128,256x256}/apps
             
             # Copy the Python script
-            cp kubux-wallpaper-generator.py $out/bin/kubux-wallpaper-generator.py
-            chmod +x $out/bin/kubux-wallpaper-generator.py
+            cp kubux-ai-image-generator.py $out/bin/kubux-ai-image-generator.py
+            cp probe_font.py $out/bin/probe_font.py
+            chmod +x $out/bin/kubux-ai-image-generator.py
             
             # Create wrapper using makeWrapper for proper desktop integration
-            makeWrapper ${pythonEnv}/bin/python $out/bin/kubux-wallpaper-generator \
-              --add-flags "$out/bin/kubux-wallpaper-generator.py" \
+            makeWrapper ${pythonEnv}/bin/python $out/bin/kubux-ai-image-generator \
+              --add-flags "$out/bin/kubux-ai-image-generator.py" \
               --set-default TMPDIR "/tmp"
             
             # Copy desktop file
-            cp kubux-wallpaper-generator.desktop $out/share/applications/
+            cp kubux-ai-image-generator.desktop $out/share/applications/
             
             # Copy icons to all size directories
             for size in 16x16 22x22 24x24 32x32 48x48 64x64 128x128 256x256; do
-              if [ -f hicolor/$size/apps/kubux-wallpaper-generator.png ]; then
-                cp hicolor/$size/apps/kubux-wallpaper-generator.png $out/share/icons/hicolor/$size/apps/
+              if [ -f hicolor/$size/apps/kubux-ai-image-generator.png ]; then
+                cp hicolor/$size/apps/kubux-ai-image-generator.png $out/share/icons/hicolor/$size/apps/
               fi
             done
           '';
           
           meta = with pkgs.lib; {
-            description = "AI-powered wallpaper creation tool";
-            homepage = "https://github.com/kubux/kubux-wallpaper-generator";
+            description = "AI-powered ai-image creation tool";
+            homepage = "https://github.com/kubux/kubux-ai-image-generator";
             license = licenses.asl20;
             maintainers = [ ];
             platforms = platforms.linux;
@@ -122,12 +123,12 @@
 	    export SCANCODE_CACHE=$HOME/.cache/scancode-cache
 	    export SCANCODE_LICENSE_INDEX_CACHE=$HOME/.cache/scancode-license-cache
 	    ln -s $( which python ) python
-            echo "Kubux Wallpaper Generator development environment"
+            echo "Kubux Ai-Image Generator development environment"
             echo "Python with all dependencies available:"
             echo "  - tkinter, pillow, requests, python-dotenv"
             echo "  - together (from PyPI)"
             echo ""
-            echo "You can now run: python kubux-wallpaper-generator.py"
+            echo "You can now run: python kubux-ai-image-generator.py"
 	    echo ""
 	    echo "A symlink to the actual python interpreter is provided for PyCharm"
 	    cleanup() {
