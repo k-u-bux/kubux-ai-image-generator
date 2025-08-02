@@ -266,11 +266,19 @@ def download_image(url, file_name, error_callback=fallback_show_error):
         with open(save_path, 'wb') as f:
             for chunk in response.iter_content(chunk_size=8192): f.write(chunk)
         print(f"file = {save_path} saved")
-        return save_path
     except Exception as e:
         os.remove(save_path)
         message = f"Failed to download image: {e}"
         error_callback("Download Error", message)
+        return None
+    try:
+        link_path=os.path.join(DOWNLOAD_DIR, os.path.basename(file_name))
+        os.symlink(save_path, link_path)
+        return link_path
+    except Exception as e:
+        os.remove(link_path)
+        message = f"Failed to link image: {e}"
+        error_callback("File system error,", message)
         return None
 
 # --- widgets ---
