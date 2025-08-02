@@ -240,8 +240,7 @@ def download_image(url, file_name, error_callback=fallback_show_error):
         try:
             os.remove(tmp_save_path)
             os.remove(save_path)
-        except dummy:
-            pass
+        except Exception: pass
         message = f"Failed to download image: {e}"
         error_callback("Download Error", message)
         return None
