@@ -2,7 +2,7 @@
 Name=Kubux AI Image Generator
 Comment=AI-powered image creation tool
 Exec=kubux-ai-image-generator
-Icon=kubux-ai-imager-generator
+Icon=kubux-ai-image-generator
 Terminal=false
 Type=Application
 Categories=Graphics;Photography;
