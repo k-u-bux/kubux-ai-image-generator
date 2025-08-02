@@ -72,7 +72,6 @@
           installPhase = ''
             mkdir -p $out/bin
             mkdir -p $out/share/applications
-            mkdir -p $out/share/icons/hicolor/{16x16,22x22,24x24,32x32,48x48,64x64,128x128,256x256}/apps
 
             # Copy the Python script
             cp kubux-ai-image-generator.py $out/bin/kubux-ai-image-generator.py
@@ -87,14 +86,10 @@
             # Copy desktop file
             cp kubux-ai-image-generator.desktop $out/share/applications/
 
-	    # create icons
-	    bash create_icons.sh app-icon.png kubux-ai-image-generator
-	    
-            # Copy icons to all size directories
-            for size in 16x16 22x22 24x24 32x32 48x48 64x64 128x128 256x256; do
-              if [ -f hicolor/$size/apps/kubux-ai-image-generator.png ]; then
-                cp hicolor/$size/apps/kubux-ai-image-generator.png $out/share/icons/hicolor/$size/apps/
-              fi
+            # Make icons for all sizes
+            for size in 16x16 22x22 24x24 32x32 48x48 64x64 96x96 128x128 192x192 256x256; do
+ 	      mkdir -p $out/share/icons/hicolor/$size/apps
+	      magick convert app-icon.png -resize $size $out/share/icons/hicolor/$size/apps/kubux-ai-image-generator.png
             done
           '';
           
