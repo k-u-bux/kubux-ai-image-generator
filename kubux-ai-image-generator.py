@@ -56,6 +56,7 @@ PROMPT_HISTORY_FILE = os.path.join(CONFIG_DIR, "prompt_history.json")
 APP_SETTINGS_FILE = os.path.join(CONFIG_DIR, "app_settings.json")    
 
 os.makedirs(DOWNLOAD_DIR, exist_ok=True)
+os.makedirs(CONFIG_DIR, exist_ok=True)
 
 def unique_name(original_path, prompt):
     key = f"{prompt}"
@@ -318,6 +319,8 @@ class FullscreenImageViewer(tk.Toplevel):
         self.wm_attributes("-type", "normal")
         self.wm_attributes('-fullscreen', start_fullscreen)
         self.protocol("WM_DELETE_WINDOW", self._close)
+
+        self.geometry(self.master.image_win_geometry)
         
         # Create a frame to hold the canvas and scrollbars
         self.frame = ttk.Frame(self)
@@ -359,11 +362,6 @@ class FullscreenImageViewer(tk.Toplevel):
         
         # Bind events
         self._bind_events()
-        
-        # Center window on parent 
-        if not start_fullscreen:
-            self.geometry("800x600")
-            self._center_on_parent()
         
         # Set fullscreen if requested (after window has been mapped)
         if start_fullscreen:
@@ -502,28 +500,7 @@ class FullscreenImageViewer(tk.Toplevel):
             self.canvas.yview_moveto(0)  # Reset vertical scroll position
         else:
             self.v_scrollbar.grid()
-                            
-    def _center_on_parent(self):
-        """Center this window on its parent."""
-        self.update_idletasks()
-        parent = self.master
-        
-        # Get parent and self dimensions
-        parent_width = parent.winfo_width()
-        parent_height = parent.winfo_height()
-        parent_x = parent.winfo_rootx()
-        parent_y = parent.winfo_rooty()
-        
-        self_width = self.winfo_width()
-        self_height = self.winfo_height()
-        
-        # Calculate position
-        x = parent_x + (parent_width - self_width) // 2
-        y = parent_y + (parent_height - self_height) // 2
-        
-        # Set position
-        self.geometry(f"+{x}+{y}")
-    
+                                
     def _bind_events(self):
         """Bind all event handlers."""
         # Keyboard events
@@ -698,11 +675,8 @@ class ImageGenerator(tk.Tk):
         font_name, font_size = probe_font.get_linux_system_ui_font_info()
         self.base_font_size = font_size
         self.main_font = tkFont.Font(family=font_name, size=int(self.base_font_size * self.ui_scale))
-        self.geometry(self.initial_geometry)
+        self.geometry(self.main_win_geometry)
 
-        self.n_steps = 28
-        self.image_scale = 1.0
-        
         self._create_widgets()
         self.update_idletasks()
         
@@ -735,15 +709,21 @@ class ImageGenerator(tk.Tk):
             self.app_settings = {}
         
         self.ui_scale = self.app_settings.get("ui_scale", 1.0)
-        self.initial_geometry = self.app_settings.get("window_geometry", "1200x800")
-
+        self.main_win_geometry = self.app_settings.get("main_win_geometry", "1200x800")
+        self.image_win_geometry = self.app_settings.get("image_win_geometry", "1200x800")
+        self.n_steps = self.app_settings.get("n_steps", 28)
+        self.image_scale = self.app_settings.get("image_scale", 1.0)
+        
     def _save_app_settings(self):
         try:
             if not hasattr(self, 'app_settings'):
                 self.app_settings = {}
 
             self.app_settings["ui_scale"] = self.ui_scale
-            self.app_settings["window_geometry"] = self.geometry()
+            self.app_settings["main_win_geometry"] = self.geometry()
+            self.app_settings["image_win_geometry"] = self.image_frame.geometry()
+            self.app_settings["n_steps"] = self.n_steps
+            self.app_settings["image_scale"] = self.image_scale
 
             with open(APP_SETTINGS_FILE, 'w') as f:
                 json.dump(self.app_settings, f, indent=4)
