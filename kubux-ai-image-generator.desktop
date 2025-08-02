@@ -1,0 +1,11 @@
+[Desktop Entry]
+Name=Kubux AI Image Generator
+Comment=AI-powered image creation tool
+Exec=kubux-ai-image-generator
+Icon=kubux-ai-imager-generator
+Terminal=false
+Type=Application
+Categories=Graphics;Photography;
+Keywords=wallpaper;AI;generator;background;
+StartupNotify=true
+StartupWMClass=kubux-ai-image-generator
