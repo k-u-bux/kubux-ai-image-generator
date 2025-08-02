@@ -388,7 +388,7 @@ class FullscreenImageViewer(tk.Toplevel):
     """
     A widget for displaying an image with zooming and panning capabilities.
     """
-    
+    super().__init__(className="kubux-ai-image-generator")
     def __init__(self, master, image_path=None, title="change me", start_fullscreen=False):
         """
         Initialize the image viewer.
