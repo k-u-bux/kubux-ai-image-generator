@@ -714,7 +714,7 @@ class ImageGenerator(tk.Tk):
             controls_frame.pack(side="top", fill="x", pady=(5, 5), padx=5)
             if True:
                 self.generate_button = ttk.Button(controls_frame, text="Generate", command=self._on_generate_button_click)
-                self.generate_button.pack(side="left", padx=(2,24))
+                self.generate_button.pack(side="left", padx=(2,0))
                 dummy_A_label = tk.Label(controls_frame, text="# steps:", font=self.main_font)
                 dummy_A_label.pack(side="left", padx=(24,0))
                 dummy_A_frame = tk.Frame(controls_frame)
@@ -740,7 +740,7 @@ class ImageGenerator(tk.Tk):
                 self.scale_slider.pack(anchor="w")
                 
                 self.history_button = ttk.Button(controls_frame, text="Prompt history", command=self._show_prompt_history)
-                self.history_button.pack(side="left", padx=(12,12))
+                self.history_button.pack(side="left", padx=(24,12))
                 dummy_C_frame = tk.Frame(controls_frame)
                 dummy_C_frame.pack(side="right", expand=False, fill="x")
                 self.ui_slider = tk.Scale(
