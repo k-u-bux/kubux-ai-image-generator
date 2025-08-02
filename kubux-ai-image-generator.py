@@ -41,6 +41,19 @@ load_dotenv()
 TOGETHER_API_KEY = os.getenv("TOGETHER_API_KEY")
 ai_features_enabled = bool(TOGETHER_API_KEY)
 
+MODEL_STRINGS = [
+    ("FLUX.1 Pro", "black-forest-labs/FLUX.1-pro"),
+    ("Stable Diffusion XL 1.0", "stabilityai/stable-diffusion-xl-base-1.0"),
+    ("FLUX.1 Schnell", "black-forest-labs/FLUX.1-schnell"),
+    ("FLUX.1.1 Pro", "black-forest-labs/FLUX.1.1-pro"),
+    ("FLUX.1 Dev", "black-forest-labs/FLUX.1-dev"),
+    ("FLUX.1 Schnell (Free)", "black-forest-labs/FLUX.1-schnell-Free"),
+    ("FLUX.1 Canny (for edge based conditions)", "black-forest-labs/FLUX.1-canny"),
+    ("FLUX.1 Depth (for depth based conditioning)", "black-forest-labs/FLUX.1-depth"),
+    ("FLUX.1 Redux (image variation, restyling)", "black-forest-labs/FLUX.1-redux"),
+    ("FLUX.1 Dev (LoRA support)", "black-forest-labs/FLUX.1-dev-lora"),
+    ("FLUX.1 Kontext Dev (text and image input)", "black-forest-labs/FLUX.1-kontext-dev"),
+]
 
 SUPPORTED_IMAGE_EXTENSIONS = (
     '.png', '.jpg', '.jpeg', '.gif', '.bmp', '.tif', '.tiff', '.webp',
@@ -326,9 +339,7 @@ def good_dimensions(image_width, image_height, scale=1.0, delta=0.05):
     return best_w * 32, best_h * 32
 
 
-def generate_image(prompt, width, height,
-                   model="black-forest-labs/FLUX.1-pro",
-                   steps=28,
+def generate_image(prompt, width, height, model, steps,
                    error_callback=fallback_show_error):
     client = Together(api_key=TOGETHER_API_KEY)
     try:
@@ -816,6 +827,7 @@ class ImageGenerator(tk.Tk):
         self.image_win_geometry = self.app_settings.get("image_win_geometry", "1200x800")
         self.n_steps = self.app_settings.get("n_steps", 28)
         self.image_scale = self.app_settings.get("image_scale", 1.0)
+        self.model_index = self.app_settings.get("model_index", 0 )
         
     def _save_app_settings(self):
         try:
@@ -827,6 +839,7 @@ class ImageGenerator(tk.Tk):
             self.app_settings["image_win_geometry"] = self.image_frame.geometry()
             self.app_settings["n_steps"] = self.n_steps
             self.app_settings["image_scale"] = self.image_scale
+            self.app_settings["model_index"] = self.model_index
 
             with open(APP_SETTINGS_FILE, 'w') as f:
                 json.dump(self.app_settings, f, indent=4)
@@ -846,6 +859,15 @@ class ImageGenerator(tk.Tk):
         self.main_container.pack(side="top", fill="both", expand=True, padx=5, pady=(5, 0))
 
         if True:
+            model_frame =  tk.Frame(self.main_container)
+            model_frame.pack(side="top", expand=True, fill="x", pady=(5, 5), padx=(2,2))
+            self.model_menubutton = tk.Menubutton(model_frame, text=MODEL_STRINGS[self.model_index][0], font=self.main_font)
+            model_menu = tk.Menu( self.model_menubutton, font=self.main_font )
+            self.model_menubutton.config( menu = model_menu )
+            for i, (entry, model) in enumerate(MODEL_STRINGS):
+                model_menu.add_command( label=entry, command=lambda idx = i : self._set_model_index(idx))
+            self.model_menubutton.pack(side="left", fill="x", expand=True, padx=(2,2), pady=(5,5))
+        if True:
             controls_frame = tk.Frame(self.main_container)
             controls_frame.pack(side="top", fill="x", pady=(5, 5), padx=5)
             if True:
@@ -856,7 +878,7 @@ class ImageGenerator(tk.Tk):
                 dummy_A_frame = tk.Frame(controls_frame)
                 dummy_A_frame.pack(side="left", expand=True, fill="x")
                 self.steps_slider = tk.Scale(
-                    dummy_A_frame, from_=12, to=48, orient="horizontal", 
+                    dummy_A_frame, from_=1, to=64, orient="horizontal", 
                     resolution=1, showvalue=True, font=self.main_font
                 )
                 self.steps_slider.set(self.n_steps)
@@ -902,8 +924,7 @@ class ImageGenerator(tk.Tk):
 
     def spawn_image_frame(self):
         self.image_frame = FullscreenImageViewer(self, title="set aspect ratio")
-        
-        
+                
     def _update_ui_scale(self, value):
         if self._ui_scale_job: self.after_cancel(self._ui_scale_job)
         self._ui_scale_job = self.after(400, lambda: self._do_update_ui_scale(float(value)))
@@ -912,6 +933,10 @@ class ImageGenerator(tk.Tk):
         self.image_scale = float(value)
         self.image_frame._update_image()
 
+    def _set_model_index(self, index):
+        self.model_index = index;
+        self.model_menubutton.config( text=MODEL_STRINGS[self.model_index][0] )
+        
     def _do_update_ui_scale(self, scale_factor):
         self.ui_scale = scale_factor
         new_size = int(self.base_font_size * scale_factor)
@@ -989,7 +1014,7 @@ class ImageGenerator(tk.Tk):
         threading.Thread(target=self._run_generation_task, args=(prompt, w, h), daemon=True).start()
 
     def _run_generation_task(self, prompt, width, height):
-        image_url = generate_image(prompt, width, height, steps = self.n_steps,
+        image_url = generate_image(prompt, width, height, model = MODEL_STRINGS[self.model_index][1], steps = self.n_steps,
                                    error_callback=lambda t, m : custom_message_dialog(parent=self,
                                                                                       title=t,
                                                                                       message=m,
