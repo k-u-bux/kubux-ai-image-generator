@@ -66,14 +66,14 @@
           
           src = ./.;
           
-          buildInputs = [ pythonEnv ];
+          buildInputs = [ pythonEnv pkgs.imagemagick ];
           nativeBuildInputs = [ pkgs.makeWrapper ];
           
           installPhase = ''
             mkdir -p $out/bin
             mkdir -p $out/share/applications
             mkdir -p $out/share/icons/hicolor/{16x16,22x22,24x24,32x32,48x48,64x64,128x128,256x256}/apps
-            
+
             # Copy the Python script
             cp kubux-ai-image-generator.py $out/bin/kubux-ai-image-generator.py
             cp probe_font.py $out/bin/probe_font.py
@@ -86,7 +86,10 @@
             
             # Copy desktop file
             cp kubux-ai-image-generator.desktop $out/share/applications/
-            
+
+	    # create icons
+	    bash create_icons.sh app-icon.png kubux-ai-image-generator
+	    
             # Copy icons to all size directories
             for size in 16x16 22x22 24x24 32x32 48x48 64x64 128x128 256x256; do
               if [ -f hicolor/$size/apps/kubux-ai-image-generator.png ]; then
