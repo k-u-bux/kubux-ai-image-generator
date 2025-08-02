@@ -20,12 +20,30 @@ A streamlined desktop application for generating AI images using Together.ai's i
 
 ## Installation
 
-### Prerequisites
+### From Source (Nix)
+
+Kubux AI Image Generator includes a `flake.nix` for easy installation on NixOS and other systems with Nix package manager:
+
+```bash
+# Clone the repository
+git clone https://github.com/yourusername/kubux-ai-image-generator
+cd kubux-ai-image-generator
+
+# Build and install using Nix flakes
+nix profile install .
+```
+
+Alternatively, you can run or install by pointing nix directly to the project url.
+
+
+### From Source (Manual, untested)
+
+#### Prerequisites
 
 - Python 3.8 or higher
 - Together.ai API key (get one at [together.ai](https://together.ai))
 
-### Setup
+#### Setup
 
 1. Clone this repository:
    ```bash
