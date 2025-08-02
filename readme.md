@@ -15,6 +15,7 @@ A streamlined, user-friendly desktop application for generating AI images using 
   - Control the number of generation steps for quality vs. speed
   - Adjust image size/resolution scale
   - Customize UI scaling to suit your display
+  - Choose from a menu of available models
 - **Organized Storage**: Images are saved in categorized directories based on prompts
 
 ## Installation
