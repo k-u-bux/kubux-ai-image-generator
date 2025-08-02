@@ -224,6 +224,7 @@ def generate_image(prompt, width, height,
 
 def download_image(url, file_name, error_callback=fallback_show_error):
     save_path = os.path.join(DOWNLOAD_DIR,file_name)
+    tmp_save_path = save_path + "-tmp"
     try:
         response = requests.get(url, stream=True)
         response.raise_for_status() 
@@ -231,13 +232,16 @@ def download_image(url, file_name, error_callback=fallback_show_error):
         # print(f"dir_name = {dir_name}")
         os.makedirs(dir_name, exist_ok=True)
         # print(f"dir_name = {dir_name} created")
-        tmp_save_path = save_path + "-tmp"
         with open(tmp_save_path, 'wb') as f:
             for chunk in response.iter_content(chunk_size=8192): f.write(chunk)
         os.replace(tmp_save_path, save_path)
         # print(f"file = {save_path} saved")
     except Exception as e:
-        os.remove(save_path)
+        try:
+            os.remove(tmp_save_path)
+            os.remove(save_path)
+        except dummy:
+            pass
         message = f"Failed to download image: {e}"
         error_callback("Download Error", message)
         return None
