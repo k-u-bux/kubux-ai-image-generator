@@ -231,8 +231,10 @@ def download_image(url, file_name, error_callback=fallback_show_error):
         # print(f"dir_name = {dir_name}")
         os.makedirs(dir_name, exist_ok=True)
         # print(f"dir_name = {dir_name} created")
-        with open(save_path, 'wb') as f:
+        tmp_save_path = save_path + "-tmp"
+        with open(tmp_save_path, 'wb') as f:
             for chunk in response.iter_content(chunk_size=8192): f.write(chunk)
+        os.replace(tmp_save_path, save_path)
         # print(f"file = {save_path} saved")
     except Exception as e:
         os.remove(save_path)
