@@ -1,13 +1,13 @@
 # kubux-ai-image-generator
 
-A streamlined, user-friendly desktop application for generating AI images using Together.ai's image generation models. Create high-quality, custom images directly from text prompts with precise control over dimensions and generation parameters.
+A streamlined desktop application for generating AI images using Together.ai's image generation models. Create high-quality, custom images directly from text prompts with precise control over dimensions and generation parameters.
 
 ![Screenshot of kubux-ai-image-generator](screenshots/ai-generator.png)
 
 ## Features
 
-- **Simple Text-to-Image Generation**: Turn your text descriptions into images with a single click
-- **Intelligent Aspect Ratio Management**: Automatically optimizes image dimensions based on your viewing window
+- **Simple Text-to-Image Generation**: Turn your text descriptions into images
+- **Intelligent Aspect Ratio Management**: Select the aspect ratio by resizing the view window
 - **Full-Screen Image Viewer**: View generated images with zoom, pan, and fullscreen capabilities
 - **Prompt History**: Save and reuse successful prompts
 - **Native Look and Feel**: Automatically detects and uses your system's UI font settings
@@ -15,7 +15,7 @@ A streamlined, user-friendly desktop application for generating AI images using 
   - Control the number of generation steps for quality vs. speed
   - Adjust image size/resolution scale
   - Customize UI scaling to suit your display
-  - Choose from a menu of available models
+  - Choose from a menu of available AI models
 - **Organized Storage**: Images are saved in categorized directories based on prompts
 
 ## Installation
