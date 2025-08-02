@@ -621,7 +621,6 @@ class FullscreenImageViewer(tk.Toplevel):
         # Keyboard events
         self.bind("<Key>", self._on_key)
         self.bind("<F11>", lambda e: self.toggle_fullscreen())
-        self.bind("<Escape>", self._on_escape)
         
         # Mouse events
         self.canvas.bind("<ButtonPress-1>", self._on_mouse_down)
@@ -637,9 +636,6 @@ class FullscreenImageViewer(tk.Toplevel):
             
         # Window events
         self.bind("<Configure>", self._on_configure)
-    
-    def _on_escape(self, event):
-        self._close()
     
     def _close(self):
         if self.is_fullscreen:
