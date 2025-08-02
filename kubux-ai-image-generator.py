@@ -20,6 +20,7 @@ import platform
 import secrets
 import queue
 import threading
+import subprocess
 import time
 import tkinter as tk
 import tkinter.font as tkFont
@@ -775,7 +776,7 @@ class ImageGenerator(tk.Tk):
 
         self._load_prompt_history()
         self._load_app_settings()
-        font_name, font_size = probe_font.get_linux_system_ui_font_info()
+        font_name, font_size = get_linux_system_ui_font_info()
         self.base_font_size = font_size
         self.main_font = tkFont.Font(family=font_name, size=int(self.base_font_size * self.ui_scale))
         self.geometry(self.main_win_geometry)
