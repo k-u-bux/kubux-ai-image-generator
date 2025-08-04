@@ -72,11 +72,13 @@
           installPhase = ''
             mkdir -p $out/bin
             mkdir -p $out/share/applications
-
-            # Copy the Python script
+	    mkdir -p $out/share/man/man1
+	    
+            # Copy
             cp kubux-ai-image-generator.py $out/bin/kubux-ai-image-generator.py
             chmod +x $out/bin/kubux-ai-image-generator.py
-            
+            cp kubux-ai-image-generator.1 $out/share/man/man1/kubux-ai-image-generator.1
+	    
             # Create wrapper using makeWrapper for proper desktop integration
             makeWrapper ${pythonEnv}/bin/python $out/bin/kubux-ai-image-generator \
               --add-flags "$out/bin/kubux-ai-image-generator.py" \

@@ -1,0 +1,205 @@
+.TH KUBUX\-AI\-IMAGE\-GENERATOR 1 "2024" "kubux\-ai\-image\-generator" "User Commands"
+
+.SH NAME
+kubux\-ai\-image\-generator \- desktop application for generating AI images
+
+.SH SYNOPSIS
+.B kubux\-ai\-image\-generator
+
+.SH DESCRIPTION
+.B kubux\-ai\-image\-generator
+is a streamlined desktop application for generating AI images using Together.ai's image generation models. It provides a simple interface for creating high-quality, custom images directly from text prompts with precise control over dimensions and generation parameters.
+
+The application features a straightforward interface that allows users to enter descriptive text prompts and adjust various parameters to control the image generation process.
+
+.SH FEATURES
+.TP
+.B Simple Text\-to\-Image Generation
+Turn your text descriptions into images
+
+.TP
+.B Intelligent Aspect Ratio Management
+Select the aspect ratio by resizing the view window
+
+.TP
+.B Full\-Screen Image Viewer
+View generated images with zoom, pan, and fullscreen capabilities
+
+.TP
+.B Prompt History
+Save and reuse successful prompts
+
+.TP
+.B Native Look and Feel
+Automatically detects and uses your system's UI font settings
+
+.TP
+.B Adjustable Parameters
+Control the number of generation steps for quality vs. speed, adjust image size/resolution scale, customize UI scaling to suit your display, and choose from a menu of available AI models
+
+.TP
+.B Organized Storage
+Images are saved in categorized directories based on prompts
+
+.SH USAGE
+.PP
+After starting the application, you'll see a main window with a text input area for your prompt, controls for generation parameters, and an image viewing area.
+
+.PP
+.B Generating Images:
+.RS
+.IP 1. 4
+Enter a detailed text prompt in the input area
+.IP 2. 4
+Adjust generation settings as needed:
+.RS
+.IP \(bu 2
+\fBSteps\fR: Higher values (20\-48) for more detailed images, lower values (12\-20) for faster generation
+.IP \(bu 2
+\fBSize\fR: Adjust the scale to control resolution (higher values create larger, more detailed images)
+.IP \(bu 2
+\fBAspect\fR: You adjust the aspect ratio by resizing the image window
+.RE
+.IP 3. 4
+Click "Generate" to create your image
+.IP 4. 4
+View, zoom and explore your generated image in the viewer
+.RE
+
+.PP
+.B Tips for Better Results:
+.RS
+.IP \(bu 2
+Be specific and detailed in your prompts
+.IP \(bu 2
+Include art style references (e.g., "oil painting", "digital art", "photorealistic")
+.IP \(bu 2
+Specify lighting, mood, and composition details
+.IP \(bu 2
+Use the history feature to refine successful prompts
+.RE
+
+.PP
+.B Image Viewer Controls:
+.RS
+.IP \(bu 2
+\fBMouse Wheel\fR: Zoom in/out
+.IP \(bu 2
+\fBLeft-Click + Drag\fR: Pan image when zoomed in
+.IP \(bu 2
+\fBF11\fR: Toggle fullscreen mode
+.IP \(bu 2
+\fBKeyboard +/=\fR: Zoom in
+.IP \(bu 2
+\fBKeyboard -/_\fR: Zoom out
+.IP \(bu 2
+\fBKeyboard 0\fR: Reset zoom to fit window
+.RE
+
+.SH CONFIGURATION
+.PP
+The application stores its configuration in:
+.RS
+.IP \(bu 2
+\fI~/.config/kubux\-ai\-image\-generator/app_settings.json\fR \- Application settings
+.IP \(bu 2
+\fI~/.config/kubux\-ai\-image\-generator/prompt_history.json\fR \- Saved prompts
+.RE
+
+.PP
+Generated images are saved to:
+.RS
+.IP \(bu 2
+\fI~/Pictures/kubux\-ai\-image\-generator/\fR
+.RE
+
+.SH REQUIREMENTS
+.PP
+.RS
+.IP \(bu 2
+Python 3.8+
+.IP \(bu 2
+tkinter
+.IP \(bu 2
+PIL/Pillow
+.IP \(bu 2
+python-dotenv
+.IP \(bu 2
+requests
+.IP \(bu 2
+together
+.IP \(bu 2
+Together.ai API key (get one at https://together.ai)
+.RE
+
+.SH MODELS
+.PP
+The application supports multiple AI image generation models, including:
+.RS
+.IP \(bu 2
+FLUX.1 Pro
+.IP \(bu 2
+Stable Diffusion XL 1.0
+.IP \(bu 2
+FLUX.1 Schnell
+.IP \(bu 2
+FLUX.1.1 Pro
+.IP \(bu 2
+And several others available via Together.ai
+.RE
+
+.SH API KEY SETUP
+.PP
+To use the application, you need a Together.ai API key:
+.PP
+.RS
+.IP 1. 4
+Create an account at https://together.ai
+.IP 2. 4
+Generate an API key in your account settings
+.IP 3. 4
+Create a \fI.env\fR file in the project directory with:
+.PP
+TOGETHER_API_KEY=your_api_key_here
+.RE
+
+.SH TROUBLESHOOTING
+.TP
+.B API Key Issues
+If you see "API Error" messages, check that your Together.ai API key is valid and correctly set in the \fI.env\fR file.
+
+.TP
+.B Missing UI Elements
+If UI elements appear too small or too large, use the UI scale slider in the top-right to adjust the interface size.
+
+.SH FILES
+.TP
+.I ~/.config/kubux-ai-image-generator/app_settings.json
+User-specific application settings
+
+.TP
+.I ~/.config/kubux-ai-image-generator/prompt_history.json
+History of previously used prompts
+
+.TP
+.I ~/Pictures/kubux-ai-image-generator/
+Directory where generated images are stored
+
+.SH ENVIRONMENT
+.TP
+.B TOGETHER_API_KEY
+API key for accessing the Together.ai service
+
+.SH AUTHOR
+Kai-Uwe Bux
+
+.SH COPYRIGHT
+Copyright 2025 Kai-Uwe Bux
+
+Licensed under the Apache License, Version 2.0
+
+.SH SEE ALSO
+More information can be found at the project repository.
+
+.SH BUGS
+Report bugs to the project issue tracker.
