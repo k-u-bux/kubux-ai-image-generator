@@ -839,6 +839,8 @@ class ImageGenerator(tk.Tk):
         self.n_steps = self.app_settings.get("n_steps", 28)
         self.image_scale = self.app_settings.get("image_scale", 1.0)
         self.model_index = self.app_settings.get("model_index", 0 )
+        self.sash_pos_top = self.app_settings.get("sash_pos_top", 200)
+        self.sash_pos_bot = self.app_settings.get("sash_pos_bot", 400)
         
     def _save_app_settings(self):
         try:
@@ -851,6 +853,8 @@ class ImageGenerator(tk.Tk):
             self.app_settings["n_steps"] = self.n_steps
             self.app_settings["image_scale"] = self.image_scale
             self.app_settings["model_index"] = self.model_index
+            self.app_settings["sash_pos_top"] = self.paned_win.sashpos(0)
+            self.app_settings["sash_pos_bot"] = self.paned_win.sashpos(1)
 
             with open(APP_SETTINGS_FILE, 'w') as f:
                 json.dump(self.app_settings, f, indent=4)
@@ -936,7 +940,7 @@ class ImageGenerator(tk.Tk):
             self.paned_win.pack(side="bottom", expand=True, fill="both")
             if True:
                 prompt_button = ttk.Button(self, text="Image Prompt", style='TButton',
-                                          command=self._select_from_prompt_history)
+                                           command=self._select_from_prompt_history)
                 prompt_frame_outer = ttk.LabelFrame(self.paned_win, labelwidget=prompt_button)
                 # Setting the minimum size for the pane
                 prompt_frame_outer.configure(height=200)
@@ -963,7 +967,7 @@ class ImageGenerator(tk.Tk):
 
             if True:
                 context_button = ttk.Button(self, text="Image URL (context)", style='TButton',
-                                           command=self._select_from_context_history)
+                                            command=self._select_from_context_history)
                 context_frame_outer = ttk.LabelFrame(self.paned_win, labelwidget=context_button)
                 # Setting the minimum size for the pane
                 context_frame_outer.configure(height=200)
@@ -974,6 +978,10 @@ class ImageGenerator(tk.Tk):
                 self.context_text_widget = tk.Text(context_frame_inner, wrap="word", relief="sunken", borderwidth=2, font=self.main_font)
                 self.context_text_widget.pack(fill="both", expand=True)
 
+        self.update_idletasks()
+        self.paned_win.sashpos( 0, self.sash_pos_top )
+        self.paned_win.sashpos( 1, self.sash_pos_bot )
+                
         self.spawn_image_frame()
 
     def spawn_image_frame(self):
