@@ -1,4 +1,4 @@
-.TH KUBUX\-AI\-IMAGE\-GENERATOR 1 "2024" "kubux\-ai\-image\-generator" "User Commands"
+.TH KUBUX\-AI\-IMAGE\-GENERATOR 1 "2025" "kubux\-ai\-image\-generator" "User Commands"
 
 .SH NAME
 kubux\-ai\-image\-generator \- desktop application for generating AI images
@@ -14,7 +14,7 @@ The application features a straightforward interface that allows users to enter 
 
 .SH FEATURES
 .TP
-.B Simple Text\-to\-Image Generation
+.B Text\-to\-Image Generation
 Turn your text descriptions into images
 
 .TP
@@ -27,7 +27,7 @@ View generated images with zoom, pan, and fullscreen capabilities
 
 .TP
 .B Prompt History
-Save and reuse successful prompts
+Save and reuse successful prompts (including negative prompts and context images)
 
 .TP
 .B Native Look and Feel
@@ -43,14 +43,18 @@ Images are saved in categorized directories based on prompts
 
 .SH USAGE
 .PP
-After starting the application, you'll see a main window with a text input area for your prompt, controls for generation parameters, and an image viewing area.
+After starting the application, you'll see a main window with three text input areas (for positive prompt, negative prompt, and context image URL), controls for generation parameters, and an image viewing area.
 
 .PP
 .B Generating Images:
 .RS
 .IP 1. 4
-Enter a detailed text prompt in the input area
+Enter a detailed text prompt in the "Image Prompt" area
 .IP 2. 4
+Optionally enter a negative prompt in the "Negative Prompt" area
+.IP 3. 4
+Optionally enter a context image URL in the "Image URL (context)" area
+.IP 4. 4
 Adjust generation settings as needed:
 .RS
 .IP \(bu 2
@@ -59,10 +63,12 @@ Adjust generation settings as needed:
 \fBSize\fR: Adjust the scale to control resolution (higher values create larger, more detailed images)
 .IP \(bu 2
 \fBAspect\fR: You adjust the aspect ratio by resizing the image window
+.IP \(bu 2
+\fBModel\fR: Select the appropriate model from the dropdown menu
 .RE
-.IP 3. 4
+.IP 5. 4
 Click "Generate" to create your image
-.IP 4. 4
+.IP 6. 4
 View, zoom and explore your generated image in the viewer
 .RE
 
@@ -77,6 +83,8 @@ Include art style references (e.g., "oil painting", "digital art", "photorealist
 Specify lighting, mood, and composition details
 .IP \(bu 2
 Use the history feature to refine successful prompts
+.IP \(bu 2
+Use negative prompts to exclude unwanted elements
 .RE
 
 .PP
@@ -104,6 +112,10 @@ The application stores its configuration in:
 \fI~/.config/kubux\-ai\-image\-generator/app_settings.json\fR \- Application settings
 .IP \(bu 2
 \fI~/.config/kubux\-ai\-image\-generator/prompt_history.json\fR \- Saved prompts
+.IP \(bu 2
+\fI~/.config/kubux\-ai\-image\-generator/neg_prompt_history.json\fR \- Saved negative prompts
+.IP \(bu 2
+\fI~/.config/kubux\-ai\-image\-generator/context_history.json\fR \- Saved context image URLs
 .RE
 
 .PP
@@ -127,7 +139,7 @@ python-dotenv
 .IP \(bu 2
 requests
 .IP \(bu 2
-together
+together 1.5.21+
 .IP \(bu 2
 Together.ai API key (get one at https://together.ai)
 .RE
@@ -139,13 +151,21 @@ The application supports multiple AI image generation models, including:
 .IP \(bu 2
 FLUX.1 Pro
 .IP \(bu 2
-Stable Diffusion XL 1.0
-.IP \(bu 2
-FLUX.1 Schnell
-.IP \(bu 2
 FLUX.1.1 Pro
 .IP \(bu 2
-And several others available via Together.ai
+Stable Diffusion XL 1.0
+.IP \(bu 2
+FLUX.1 Schnell (including Free tier)
+.IP \(bu 2
+FLUX.1 Dev (with LoRA support)
+.IP \(bu 2
+FLUX.1 Canny (edge-based conditioning)
+.IP \(bu 2
+FLUX.1 Depth (depth-based conditioning)
+.IP \(bu 2
+FLUX.1 Redux (image variation and restyling)
+.IP \(bu 2
+FLUX.1 Kontext Dev (text and image input)
 .RE
 
 .SH API KEY SETUP
@@ -182,6 +202,14 @@ User-specific application settings
 History of previously used prompts
 
 .TP
+.I ~/.config/kubux-ai-image-generator/neg_prompt_history.json
+History of previously used negative prompts
+
+.TP
+.I ~/.config/kubux-ai-image-generator/context_history.json
+History of previously used context image URLs
+
+.TP
 .I ~/Pictures/kubux-ai-image-generator/
 Directory where generated images are stored
 
@@ -199,7 +227,15 @@ Copyright 2025 Kai-Uwe Bux
 Licensed under the Apache License, Version 2.0
 
 .SH SEE ALSO
-More information can be found at the project repository.
+More information about the models used can be found at:
+.PP
+.RS
+https://www.together.ai/blog/flux-1-kontext
+.PP
+https://www.together.ai/blog/flux-tools-models-together-apis-canny-depth-image-generation
+.PP
+https://www.together.ai/blog/generate-images-with-specific-styles-using-flux-loras-on-together-ai
+.RE
 
 .SH BUGS
 Report bugs to the project issue tracker.

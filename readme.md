@@ -1,12 +1,12 @@
 # kubux-ai-image-generator
 
-A streamlined desktop application for generating AI images using Together.ai's image generation models. Create high-quality, custom images directly from text prompts with precise control over dimensions and generation parameters.
+A desktop application for generating AI images using Together.ai's image generation models. Create high-quality, custom images directly from text prompts with precise control over dimensions and generation parameters.
 
 ![Screenshot of kubux-ai-image-generator](screenshots/ai-generator.png)
 
 ## Features
 
-- **Simple Text-to-Image Generation**: Turn your text descriptions into images
+- **Text-to-Image Generation**: Turn your text descriptions into images
 - **Intelligent Aspect Ratio Management**: Select the aspect ratio by resizing the view window
 - **Full-Screen Image Viewer**: View generated images with zoom, pan, and fullscreen capabilities
 - **Prompt History**: Save and reuse successful prompts
@@ -15,45 +15,45 @@ A streamlined desktop application for generating AI images using Together.ai's i
   - Control the number of generation steps for quality vs. speed
   - Adjust image size/resolution scale
   - Customize UI scaling to suit your display
-  - Choose from a menu of available AI models
+  - Choose from a variety of AI models from Together.ai
 - **Organized Storage**: Images are saved in categorized directories based on prompts
 
 ## Installation
 
-### From Source (Nix)
+### Using Nix (Recommended)
 
-Kubux AI Image Generator includes a `flake.nix` for easy installation on NixOS and other systems with Nix package manager:
+The easiest way to install is using the Nix package manager:
 
 ```bash
-# Clone the repository
-git clone https://github.com/yourusername/kubux-ai-image-generator
-cd kubux-ai-image-generator
-
-# Build and install using Nix flakes
-nix profile install .
+# Install directly from GitHub
+nix profile install github:k-u-bux/kubux-image-manager
 ```
 
-Alternatively, you can run or install by pointing nix directly to the project url.
+### Manual Installation (Untested)
 
-
-### From Source (Manual, untested)
+**Warning**: Manual installation is untested and may require additional configuration.
 
 #### Prerequisites
 
 - Python 3.8 or higher
+- tkinter
+- PIL/Pillow
+- python-dotenv
+- requests
+- together 1.5.21 or compatible version
 - Together.ai API key (get one at [together.ai](https://together.ai))
 
 #### Setup
 
 1. Clone this repository:
    ```bash
-   git clone https://github.com/yourusername/kubux-ai-image-generator.git
-   cd kubux-ai-image-generator
+   git clone https://github.com/k-u-bux/kubux-image-manager.git
+   cd kubux-image-manager
    ```
 
 2. Install dependencies:
    ```bash
-   pip install -r requirements.txt
+   pip install pillow requests python-dotenv together==1.5.21
    ```
 
 3. Create a `.env` file in the project directory with your API key:
@@ -72,37 +72,49 @@ python kubux-ai-image-generator.py
 ### Generating Images
 
 1. Enter a detailed text prompt in the input area
-2. Adjust generation settings as needed:
+2. Optionally add a negative prompt to specify what you don't want in the image
+3. Optionally provide a context image URL for image-to-image generation
+4. Adjust generation settings as needed:
    - **Steps**: Higher values (20-48) for more detailed images, lower values (12-20) for faster generation
    - **Size**: Adjust the scale to control resolution (higher values create larger, more detailed images)
-   - **Aspect**: You adjust the aspect ratio by resizing the image window.
-3. Click "Generate" to create your image
-4. View, zoom and explore your generated image in the viewer
+   - **Aspect**: You adjust the aspect ratio by resizing the image window
+5. Select the model you want to use from the dropdown menu
+6. Click "Generate" to create your image
+7. View, zoom and explore your generated image in the viewer
 
-### Tips for Better Results
+### Image Viewer Controls
 
-- Be specific and detailed in your prompts
-- Include art style references (e.g., "oil painting", "digital art", "photorealistic")
-- Specify lighting, mood, and composition details
-- Use the history feature to refine successful prompts
+- **Mouse Wheel**: Zoom in/out
+- **Left-Click + Drag**: Pan image when zoomed in
+- **F11**: Toggle fullscreen mode
+- **Keyboard +/=**: Zoom in
+- **Keyboard -/_**: Zoom out
+- **Keyboard 0**: Reset zoom to fit window
+
+## Supported Models
+
+The application supports several models from [Together.ai](https://www.together.ai) and [Black Forest Labs](https://blackforestlabs.ai/), including:
+
+- FLUX.1 Pro
+- FLUX.1.1 Pro
+- Stable Diffusion XL 1.0 (broken)
+- FLUX.1 Schnell (including Free tier)
+- FLUX.1 Dev (with LoRA support)
+- FLUX.1 Canny (edge-based conditioning)
+- FLUX.1 Depth (depth-based conditioning)
+- FLUX.1 Redux (image variation and restyling)
+- FLUX.1 Kontext Dev (text and image input)
 
 ## Configuration
 
 The application stores its configuration in:
 - `~/.config/kubux-ai-image-generator/app_settings.json` - Application settings
 - `~/.config/kubux-ai-image-generator/prompt_history.json` - Saved prompts
+- `~/.config/kubux-ai-image-generator/neg_prompt_history.json` - Saved negative prompts
+- `~/.config/kubux-ai-image-generator/context_history.json` - Saved context image URLs
 
 Generated images are saved to:
 - `~/Pictures/kubux-ai-image-generator/`
-
-## Requirements
-
-- Python 3.8+
-- tkinter
-- PIL/Pillow
-- python-dotenv
-- requests
-- together
 
 ## Troubleshooting
 
@@ -122,19 +134,5 @@ This project is licensed under the Apache License 2.0 - see the LICENSE file for
 
 ## Acknowledgments
 
-- Built with the Together.ai API for image generation
-- Uses the FLUX.1-pro model from Black Forest Labs
-
----
-
-## Development Notes
-
-### System Requirements
-
-The application is designed for Linux desktop environments and includes automatic detection of system UI fonts for native integration with:
-
-- GNOME-based desktops (Ubuntu, Fedora Workstation, etc.)
-- KDE Plasma
-- XFCE
-- Cinnamon
-- MATE
+- Built with the [Together.ai API](https://www.together.ai/blog/flux-1-kontext) for image generation
+- Uses models from [Black Forest Labs](https://blackforestlabs.ai/)
