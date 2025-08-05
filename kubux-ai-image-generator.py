@@ -867,93 +867,110 @@ class ImageGenerator(tk.Tk):
     def _create_widgets(self):
         self.style = ttk.Style()
         self.style.configure('.', font=self.main_font)
-
-        self.main_container = tk.Frame(self)
+        
+        self.style.configure('Sash.TPanedwindow', sashthickness=10)
+        self.style.configure('TButton', relief="flat")
+        self.style.configure('TMenubutton', relief="flat")
+        
+        self.main_container = ttk.Frame(self)
         self.main_container.pack(side="top", fill="both", expand=True, padx=5, pady=(5, 0))
 
         if True:
-            model_frame =  tk.Frame(self.main_container)
+            model_frame = ttk.Frame(self.main_container)
             model_frame.pack(side="top", expand=False, fill="x", pady=(5, 5), padx=(2,2))
-            self.model_menubutton = tk.Menubutton(model_frame, text=MODEL_STRINGS[self.model_index][0], font=self.main_font)
-            model_menu = tk.Menu( self.model_menubutton, font=self.main_font )
-            self.model_menubutton.config( menu = model_menu )
+            self.model_menubutton = ttk.Menubutton(model_frame, text=MODEL_STRINGS[self.model_index][0], style='TMenubutton')
+            model_menu = tk.Menu(self.model_menubutton, font=self.main_font)  # Menu cannot be replaced with ttk
+            self.model_menubutton.config(menu=model_menu)
             for i, (entry, model) in enumerate(MODEL_STRINGS):
-                model_menu.add_command( label=entry, command=lambda idx = i : self._set_model_index(idx))
+                model_menu.add_command(label=entry, command=lambda idx = i : self._set_model_index(idx))
             self.model_menubutton.pack(side="left", fill="x", expand=True, padx=(2,2), pady=(5,5))
         if True:
-            controls_frame = tk.Frame(self.main_container)
+            controls_frame = ttk.Frame(self.main_container)
             controls_frame.pack(side="top", expand=False, fill="x", pady=(5, 5), padx=5)
             if True:
-                dummy_G_frame = tk.Frame(controls_frame)
+                dummy_G_frame = ttk.Frame(controls_frame)
                 dummy_G_frame.pack(side="left", expand=True, fill="x")
-                self.generate_button = tk.Button(dummy_G_frame, text="Generate", relief="flat", font=self.main_font, command=self._on_generate_button_click)
+                self.generate_button = ttk.Button(dummy_G_frame, text="Generate", style='TButton', command=self._on_generate_button_click)
                 self.generate_button.pack(side="left", padx=(2,0))
-                dummy_A_label = tk.Label(controls_frame, text="# steps:", font=self.main_font)
+                dummy_A_label = ttk.Label(controls_frame, text="# steps:", style='TLabel')
                 dummy_A_label.pack(side="left", padx=(24,0))
-                dummy_A_frame = tk.Frame(controls_frame)
+                dummy_A_frame = ttk.Frame(controls_frame)
                 dummy_A_frame.pack(side="left", expand=True, fill="x")
-                self.steps_slider = tk.Scale(
-                    dummy_A_frame, from_=1, to=64, orient="horizontal", 
-                    resolution=1, showvalue=True, font=self.main_font
+                
+                # ttk doesn't have Scale with showvalue; using a workaround
+                self.steps_slider = ttk.Scale(
+                    dummy_A_frame, from_=1, to=64, orient="horizontal"
                 )
                 self.steps_slider.set(self.n_steps)
-                self.steps_slider.config(command=lambda value : setattr(self, 'n_steps', int(value)))
+                self.steps_slider.config(command=lambda value: setattr(self, 'n_steps', int(float(value))))
                 self.steps_slider.pack(anchor="w")
-
-                dummy_B_label = tk.Label(controls_frame, text="size:", font=self.main_font)
+                
+                dummy_B_label = ttk.Label(controls_frame, text="size:", style='TLabel')
                 dummy_B_label.pack(side="left", padx=(24,0))
-                dummy_B_frame = tk.Frame(controls_frame)
+                dummy_B_frame = ttk.Frame(controls_frame)
                 dummy_B_frame.pack(side="left", expand=True, fill="x")
-                self.scale_slider = tk.Scale(
-                    dummy_B_frame, from_=0.2, to=1.0, orient="horizontal", 
-                    resolution=0.05, showvalue=True, font=self.main_font
+                
+                self.scale_slider = ttk.Scale(
+                    dummy_B_frame, from_=0.2, to=1.0, orient="horizontal"
                 )
                 self.scale_slider.set(self.image_scale)
                 self.scale_slider.config(command=self._update_image_scale)
                 self.scale_slider.pack(anchor="w")
                 
-                dummy_C_frame = tk.Frame(controls_frame)
+                dummy_C_frame = ttk.Frame(controls_frame)
                 dummy_C_frame.pack(side="right", expand=False, fill="x")
-                self.ui_slider = tk.Scale(
-                    dummy_C_frame, from_=0.5, to=3.5, orient="horizontal", 
-                    resolution=0.1, showvalue=False
+                
+                self.ui_slider = ttk.Scale(
+                    dummy_C_frame, from_=0.5, to=3.5, orient="horizontal"
                 )
                 self.ui_slider.set(self.ui_scale)
                 self.ui_slider.config(command=self._update_ui_scale)
                 self.ui_slider.pack(anchor="e")
-                dummy_C_label = tk.Label(controls_frame, text="UI:", font=self.main_font)
+                
+                dummy_C_label = ttk.Label(controls_frame, text="UI:", style='TLabel')
                 dummy_C_label.pack(side="right", padx=(12,0))
 
         if True:
-            self.paned_win = tk.PanedWindow(self.main_container, orient="vertical", sashwidth=10, sashrelief="flat")
+            # Use style to control sash appearance
+            self.paned_win = ttk.PanedWindow(self.main_container, orient="vertical", style='Sash.TPanedwindow')
             self.paned_win.pack(side="bottom", expand=True, fill="both")
             if True:
-                prompt_button = tk.Button(self, text="Image Prompt", relief="flat", font=self.main_font,
-                                          command=self._select_from_prompt_history )
+                prompt_button = ttk.Button(self, text="Image Prompt", style='TButton',
+                                          command=self._select_from_prompt_history)
                 prompt_frame_outer = ttk.LabelFrame(self.paned_win, labelwidget=prompt_button)
-                self.paned_win.add( prompt_frame_outer, height=200 )
-                prompt_frame_inner = tk.Frame(prompt_frame_outer)
+                # Setting the minimum size for the pane
+                prompt_frame_outer.configure(height=200)
+                self.paned_win.add(prompt_frame_outer, weight=1)
+                prompt_frame_inner = ttk.Frame(prompt_frame_outer)
                 prompt_frame_inner.pack(fill="both", expand=True, padx=5, pady=5)
+                
+                # ttk doesn't have Text widget, using tk.Text is necessary
                 self.prompt_text_widget = tk.Text(prompt_frame_inner, wrap="word", relief="sunken", borderwidth=2, font=self.main_font)
                 self.prompt_text_widget.pack(fill="both", expand=True)
                 
             if True:
-                neg_prompt_button = tk.Button(self, text="Negative Prompt", relief="flat", font=self.main_font,
-                                              command=self._select_from_neg_prompt_history )
+                neg_prompt_button = ttk.Button(self, text="Negative Prompt", style='TButton',
+                                              command=self._select_from_neg_prompt_history)
                 neg_prompt_frame_outer = ttk.LabelFrame(self.paned_win, labelwidget=neg_prompt_button)
-                self.paned_win.add( neg_prompt_frame_outer, height=200 )
-                neg_prompt_frame_inner = tk.Frame(neg_prompt_frame_outer)
+                # Setting the minimum size for the pane
+                neg_prompt_frame_outer.configure(height=200)
+                self.paned_win.add(neg_prompt_frame_outer, weight=1)
+                neg_prompt_frame_inner = ttk.Frame(neg_prompt_frame_outer)
                 neg_prompt_frame_inner.pack(fill="both", expand=True, padx=5, pady=5)
+                
                 self.neg_prompt_text_widget = tk.Text(neg_prompt_frame_inner, wrap="word", relief="sunken", borderwidth=2, font=self.main_font)
                 self.neg_prompt_text_widget.pack(fill="both", expand=True)
 
             if True:
-                context_button = tk.Button(self, text="Image URL (context)", relief="flat", font=self.main_font,
-                                              command=self._select_from_context_history)
+                context_button = ttk.Button(self, text="Image URL (context)", style='TButton',
+                                           command=self._select_from_context_history)
                 context_frame_outer = ttk.LabelFrame(self.paned_win, labelwidget=context_button)
-                self.paned_win.add( context_frame_outer, height=200 )
-                context_frame_inner = tk.Frame(context_frame_outer)
+                # Setting the minimum size for the pane
+                context_frame_outer.configure(height=200)
+                self.paned_win.add(context_frame_outer, weight=1)
+                context_frame_inner = ttk.Frame(context_frame_outer)
                 context_frame_inner.pack(fill="both", expand=True, padx=5, pady=5)
+                
                 self.context_text_widget = tk.Text(context_frame_inner, wrap="word", relief="sunken", borderwidth=2, font=self.main_font)
                 self.context_text_widget.pack(fill="both", expand=True)
 
