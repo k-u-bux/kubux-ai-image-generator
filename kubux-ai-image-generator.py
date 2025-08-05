@@ -65,6 +65,8 @@ HOME_DIR = os.path.expanduser('~')
 CONFIG_DIR = os.path.join(HOME_DIR, ".config", "kubux-ai-image-generator")
 DOWNLOAD_DIR = os.path.join(HOME_DIR, "Pictures", "kubux-ai-image-generator")
 PROMPT_HISTORY_FILE = os.path.join(CONFIG_DIR, "prompt_history.json")
+NEG_PROMPT_HISTORY_FILE = os.path.join(CONFIG_DIR, "neg_prompt_history.json")
+CONTEXT_HISTORY_FILE = os.path.join(CONFIG_DIR, "context_history.json")
 APP_SETTINGS_FILE = os.path.join(CONFIG_DIR, "app_settings.json")    
 
 os.makedirs(DOWNLOAD_DIR, exist_ok=True)
@@ -339,7 +341,7 @@ def good_dimensions(image_width, image_height, scale=1.0, delta=0.05):
     return best_w * 32, best_h * 32
 
 
-def generate_image(prompt, width, height, model, steps,
+def generate_image(prompt, width, height, model, steps, neg_prompt, context,
                    error_callback=fallback_show_error):
     client = Together(api_key=TOGETHER_API_KEY)
     try:
@@ -348,7 +350,9 @@ def generate_image(prompt, width, height, model, steps,
             model=model,
             width=width,
             height=height,
-            steps=steps
+            steps=steps,
+            negative_prompt=neg_prompt,
+            image_url=context
         )
         return response.data[0].url
     except Exception as e:
@@ -781,8 +785,11 @@ class ImageGenerator(tk.Tk):
         self._gallery_scale_update_after_id = None
         self._ui_scale_job = None
 
-        self._load_prompt_history()
+        self.prompt_history = self._load_history(PROMPT_HISTORY_FILE)
+        self.neg_prompt_history = self._load_history(NEG_PROMPT_HISTORY_FILE)
+        self.context_history = self._load_history(CONTEXT_HISTORY_FILE)
         self._load_app_settings()
+        
         font_name, font_size = get_linux_system_ui_font_info()
         self.base_font_size = font_size
         self.main_font = tkFont.Font(family=font_name, size=int(self.base_font_size * self.ui_scale))
@@ -794,19 +801,26 @@ class ImageGenerator(tk.Tk):
         self.protocol("WM_DELETE_WINDOW", self._on_closing)
         self.update_idletasks()
 
-    def _load_prompt_history(self):
+    def _load_history(self, file):
+        history = []
         try:
-            if os.path.exists(PROMPT_HISTORY_FILE):
-                with open(PROMPT_HISTORY_FILE, 'r') as f:
-                    self.prompt_history = json.load(f)
-            else: self.prompt_history = [] 
-        except (json.JSONDecodeError, Exception): self.prompt_history = []
+            if os.path.exists(file):
+                with open(file, 'r') as f:
+                    history = json.load(f)
+        except (json.JSONDecodeError, Exception):
+            history = []
+        return history
+        
+    def _save_history(self, file, history, name):
+        try:
+            with open(file, 'w') as f:
+                json.dump(history, f, indent=4)
+        except Exception as e: print(f"Error saving {name}: {e}")
 
-    def _save_prompt_history(self):
-        try:
-            with open(PROMPT_HISTORY_FILE, 'w') as f:
-                json.dump(self.prompt_history, f, indent=4) 
-        except Exception as e: print(f"Error saving prompt history: {e}")
+    def _save_all_histories(self):
+        self._save_history(PROMPT_HISTORY_FILE, self.prompt_history, "prompt history")
+        self._save_history(NEG_PROMPT_HISTORY_FILE, self.neg_prompt_history, "negative prompt history")
+        self._save_history(CONTEXT_HISTORY_FILE, self.context_history, "context history")
 
     def _load_app_settings(self):
         try:
@@ -844,7 +858,9 @@ class ImageGenerator(tk.Tk):
             print(f"Error saving app settings: {e}")
 
     def _on_closing(self):
-        self._save_prompt_history()
+        self._save_history(PROMPT_HISTORY_FILE, self.prompt_history, "prompt history")
+        self._save_history(NEG_PROMPT_HISTORY_FILE, self.neg_prompt_history, "negative prompt history")
+        self._save_history(CONTEXT_HISTORY_FILE, self.context_history, "context history")
         self._save_app_settings()
         self.destroy() 
 
@@ -857,7 +873,7 @@ class ImageGenerator(tk.Tk):
 
         if True:
             model_frame =  tk.Frame(self.main_container)
-            model_frame.pack(side="top", expand=True, fill="x", pady=(5, 5), padx=(2,2))
+            model_frame.pack(side="top", expand=False, fill="x", pady=(5, 5), padx=(2,2))
             self.model_menubutton = tk.Menubutton(model_frame, text=MODEL_STRINGS[self.model_index][0], font=self.main_font)
             model_menu = tk.Menu( self.model_menubutton, font=self.main_font )
             self.model_menubutton.config( menu = model_menu )
@@ -866,9 +882,11 @@ class ImageGenerator(tk.Tk):
             self.model_menubutton.pack(side="left", fill="x", expand=True, padx=(2,2), pady=(5,5))
         if True:
             controls_frame = tk.Frame(self.main_container)
-            controls_frame.pack(side="top", fill="x", pady=(5, 5), padx=5)
+            controls_frame.pack(side="top", expand=False, fill="x", pady=(5, 5), padx=5)
             if True:
-                self.generate_button = ttk.Button(controls_frame, text="Generate", command=self._on_generate_button_click)
+                dummy_G_frame = tk.Frame(controls_frame)
+                dummy_G_frame.pack(side="left", expand=True, fill="x")
+                self.generate_button = tk.Button(dummy_G_frame, text="Generate", relief="flat", font=self.main_font, command=self._on_generate_button_click)
                 self.generate_button.pack(side="left", padx=(2,0))
                 dummy_A_label = tk.Label(controls_frame, text="# steps:", font=self.main_font)
                 dummy_A_label.pack(side="left", padx=(24,0))
@@ -894,8 +912,6 @@ class ImageGenerator(tk.Tk):
                 self.scale_slider.config(command=self._update_image_scale)
                 self.scale_slider.pack(anchor="w")
                 
-                self.history_button = ttk.Button(controls_frame, text="Prompt history", command=self._show_prompt_history)
-                self.history_button.pack(side="left", padx=(24,12))
                 dummy_C_frame = tk.Frame(controls_frame)
                 dummy_C_frame.pack(side="right", expand=False, fill="x")
                 self.ui_slider = tk.Scale(
@@ -907,15 +923,39 @@ class ImageGenerator(tk.Tk):
                 self.ui_slider.pack(anchor="e")
                 dummy_C_label = tk.Label(controls_frame, text="UI:", font=self.main_font)
                 dummy_C_label.pack(side="right", padx=(12,0))
-                
+
         if True:
-            prompt_frame_outer = ttk.LabelFrame(self.main_container, text="Image Prompt:")
-            prompt_frame_outer.pack(side="top", expand=True, fill="both", pady=(5, 5), padx=5)
-            prompt_frame_inner = tk.Frame(prompt_frame_outer)
-            prompt_frame_inner.pack(fill="both", expand=True, padx=5, pady=5)
-            self.prompt_text_widget = tk.Text(prompt_frame_inner, wrap="word", relief="sunken", borderwidth=2, font=self.main_font)
-            self.prompt_text_widget.pack(fill="both", expand=True)
-            self.prompt_text_widget.bind("<Return>", lambda event: self._on_generate_button_click())
+            self.paned_win = tk.PanedWindow(self.main_container, orient="vertical", sashwidth=10, sashrelief="flat")
+            self.paned_win.pack(side="bottom", expand=True, fill="both")
+            if True:
+                prompt_button = tk.Button(self, text="Image Prompt", relief="flat", font=self.main_font,
+                                          command=self._select_from_prompt_history )
+                prompt_frame_outer = ttk.LabelFrame(self.paned_win, labelwidget=prompt_button)
+                self.paned_win.add( prompt_frame_outer, height=200 )
+                prompt_frame_inner = tk.Frame(prompt_frame_outer)
+                prompt_frame_inner.pack(fill="both", expand=True, padx=5, pady=5)
+                self.prompt_text_widget = tk.Text(prompt_frame_inner, wrap="word", relief="sunken", borderwidth=2, font=self.main_font)
+                self.prompt_text_widget.pack(fill="both", expand=True)
+                
+            if True:
+                neg_prompt_button = tk.Button(self, text="Negative Prompt", relief="flat", font=self.main_font,
+                                              command=self._select_from_neg_prompt_history )
+                neg_prompt_frame_outer = ttk.LabelFrame(self.paned_win, labelwidget=neg_prompt_button)
+                self.paned_win.add( neg_prompt_frame_outer, height=200 )
+                neg_prompt_frame_inner = tk.Frame(neg_prompt_frame_outer)
+                neg_prompt_frame_inner.pack(fill="both", expand=True, padx=5, pady=5)
+                self.neg_prompt_text_widget = tk.Text(neg_prompt_frame_inner, wrap="word", relief="sunken", borderwidth=2, font=self.main_font)
+                self.neg_prompt_text_widget.pack(fill="both", expand=True)
+
+            if True:
+                context_button = tk.Button(self, text="Image URL (context)", relief="flat", font=self.main_font,
+                                              command=self._select_from_context_history)
+                context_frame_outer = ttk.LabelFrame(self.paned_win, labelwidget=context_button)
+                self.paned_win.add( context_frame_outer, height=200 )
+                context_frame_inner = tk.Frame(context_frame_outer)
+                context_frame_inner.pack(fill="both", expand=True, padx=5, pady=5)
+                self.context_text_widget = tk.Text(context_frame_inner, wrap="word", relief="sunken", borderwidth=2, font=self.main_font)
+                self.context_text_widget.pack(fill="both", expand=True)
 
         self.spawn_image_frame()
 
@@ -945,10 +985,9 @@ class ImageGenerator(tk.Tk):
             for child in widget.winfo_children(): update_widget_fonts(child, font)
         update_widget_fonts(self, self.main_font)
     
-    def _add_prompt_to_history(self, prompt):
-        if prompt in self.prompt_history: self.prompt_history.remove(prompt) 
-        self.prompt_history.insert(0, prompt)
-        self._save_prompt_history()
+    def _add_to_history(self, history, entry):
+        if entry in history: history.remove(entry) 
+        history.insert(0, entry)
     
     def _center_toplevel_window(self, toplevel_window):
         toplevel_window.update_idletasks() 
@@ -962,13 +1001,13 @@ class ImageGenerator(tk.Tk):
         y_pos = main_win_y + (main_win_h // 2) - (popup_h // 2)
         toplevel_window.geometry(f"+{x_pos}+{y_pos}")
 
-    def _show_prompt_history(self):
-        if not self.prompt_history:
-            custom_message_dialog(parent=self, title="Prompt History", message="No saved prompts found.", font=self.main_font)
+    def _select_from_history(self, history, text_widget, name):
+        if not history:
+            custom_message_dialog(parent=self, title="name", message="No saved items found.", font=self.main_font)
             return
 
         history_window = tk.Toplevel(self)
-        history_window.title("Prompt History")
+        history_window.title(name)
         history_window.transient(self)
         history_window.grab_set()
 
@@ -982,14 +1021,14 @@ class ImageGenerator(tk.Tk):
         scrollbar.pack(side="right", fill="y")
         listbox.pack(side="left", fill="both", expand=True)
 
-        for prompt in self.prompt_history: listbox.insert(tk.END, prompt)
+        for entry in history: listbox.insert(tk.END, entry)
 
         def _on_prompt_selected(event=None):
             selection_indices = listbox.curselection()
             if not selection_indices: return
-            selected_prompt = listbox.get(selection_indices[0])
-            self.prompt_text_widget.delete("1.0", tk.END)
-            self.prompt_text_widget.insert("1.0", selected_prompt)
+            selected_entry = listbox.get(selection_indices[0])
+            text_widget.delete("1.0", tk.END)
+            text_widget.insert("1.0", selected_entry)
             history_window.destroy()
 
         listbox.bind("<Double-1>", _on_prompt_selected)
@@ -1001,17 +1040,34 @@ class ImageGenerator(tk.Tk):
 
         self._center_toplevel_window(history_window)
 
+    def _select_from_prompt_history(self):
+        self._select_from_history( self.prompt_history, self.prompt_text_widget, "prompt history")        
+
+    def _select_from_neg_prompt_history(self):
+        self._select_from_history( self.neg_prompt_history, self.neg_prompt_text_widget, "neg_prompt prompt history")
+
+    def _select_from_context_history(self):
+        self._select_from_history( self.context_history, self.context_text_widget, "context history")
+        
     def _on_generate_button_click(self):
         prompt = self.prompt_text_widget.get("1.0", tk.END).strip()
         if not prompt: return custom_message_dialog(parent=self, title="Input Error", message="Please enter a prompt.",font=self.main_font)
-        self._add_prompt_to_history(prompt)
+        neg_prompt = self.neg_prompt_text_widget.get("1.0", tk.END).strip()
+        context = self.context_text_widget.get("1.0", tk.END).strip()
+        self._add_to_history(self.prompt_history, prompt)
+        self._add_to_history(self.neg_prompt_history, neg_prompt)
+        self._add_to_history(self.context_history, context)
+        self._save_all_histories()
         self.generate_button.config(text="Generating...", state="disabled")
         img_width, img_height = self.image_frame.get_dimensions()
         w, h = good_dimensions( img_width, img_height, scale=self.image_scale )
-        threading.Thread(target=self._run_generation_task, args=(prompt, w, h), daemon=True).start()
+        threading.Thread(target=self._run_generation_task, args=(prompt, w, h, neg_prompt, context), daemon=True).start()
 
-    def _run_generation_task(self, prompt, width, height):
-        image_url = generate_image(prompt, width, height, model = MODEL_STRINGS[self.model_index][1], steps = self.n_steps,
+    def _run_generation_task(self, prompt, width, height, neg_prompt, context):
+        image_url = generate_image(prompt, width, height, model = MODEL_STRINGS[self.model_index][1],
+                                   steps = self.n_steps,
+                                   neg_prompt = neg_prompt,
+                                   context = context,
                                    error_callback=lambda t, m : custom_message_dialog(parent=self,
                                                                                       title=t,
                                                                                       message=m,
