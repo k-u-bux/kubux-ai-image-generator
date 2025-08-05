@@ -360,8 +360,9 @@ def generate_image(prompt, width, height, model, steps, neg_prompt, context,
         error_callback("API Error", message)
         return None
 
-def download_image(url, file_name, prompt, error_callback=fallback_show_error):
-    key = f"{prompt}"
+def download_image(url, file_name, prompt, neg_prompt, context,
+                   error_callback=fallback_show_error):
+    key = f"{[ prompt, neg_prompt, context]}"
     prompt_dir = hashlib.sha256(key.encode('utf-8')).hexdigest()
     save_path = os.path.join(DOWNLOAD_DIR,prompt_dir,file_name)
     tmp_save_path = save_path + "-tmp"
@@ -370,15 +371,21 @@ def download_image(url, file_name, prompt, error_callback=fallback_show_error):
         response.raise_for_status() 
         dir_name = os.path.dirname(save_path)
         os.makedirs(dir_name, exist_ok=True)
-        prompt_file = os.path.join( dir_name, "prompt.txt")
-        try:
-            with open(prompt_file, 'w') as file:
-                file.write(prompt)
-        except IOError as e:
-            print(f"Error writing prompt {prompt} to file: {e}")
         with open(tmp_save_path, 'wb') as f:
             for chunk in response.iter_content(chunk_size=8192): f.write(chunk)
         os.replace(tmp_save_path, save_path)
+
+        def write_info(info_file, info):
+            info_path = os.path.join( dir_name, info_file)
+            try:
+                with open(info_path, 'w') as file:
+                    file.write(info)
+            except IOError as e:
+                print(f"Error writing {info} to file: {e}")
+                
+        write_info("prompt.txt", prompt)
+        write_info("negative-prompt.txt", neg_prompt)
+        write_info("context_url.txt", context)
     except Exception as e:
         try:
             os.remove(tmp_save_path)
@@ -1104,7 +1111,7 @@ class ImageGenerator(tk.Tk):
                                                                                       font=self.main_font))
         if image_url:
             file_name = unique_name("dummy.png","generated")
-            save_path = download_image(image_url, file_name, prompt,
+            save_path = download_image(image_url, file_name, prompt, neg_prompt, context,
                                        error_callback=lambda t, m : custom_message_dialog(parent=self,
                                                                                           title=t,
                                                                                           message=m,
