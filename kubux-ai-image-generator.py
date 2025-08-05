@@ -520,7 +520,7 @@ class FullscreenImageViewer(tk.Toplevel):
     def _update_image(self):
         """Update the displayed image based on current zoom and size."""
         w, h = self.get_aspect_ratio( self.master.image_scale )
-        self.title(f"set aspect ratio = {w} x {h}")
+        self.title(f"{w} x {h} @ {self.master.n_steps} steps with {MODEL_STRINGS[self.master.model_index][1]}")
         # print(f"geometry = {self.geometry()}")
         if not self.is_fullscreen:
             self.master.image_win_geometry = self.geometry()
@@ -902,7 +902,7 @@ class ImageGenerator(tk.Tk):
                     dummy_A_frame, from_=1, to=64, orient="horizontal"
                 )
                 self.steps_slider.set(self.n_steps)
-                self.steps_slider.config(command=lambda value: setattr(self, 'n_steps', int(float(value))))
+                self.steps_slider.config(command=self._update_n_steps_scale)
                 self.steps_slider.pack(anchor="w")
                 
                 dummy_B_label = ttk.Label(controls_frame, text="size:", style='TLabel')
@@ -987,9 +987,14 @@ class ImageGenerator(tk.Tk):
         self.image_scale = float(value)
         self.image_frame._update_image()
 
+    def _update_n_steps_scale(self, value):
+        self.n_steps = int(float(value))
+        self.image_frame._update_image()
+        
     def _set_model_index(self, index):
         self.model_index = index;
         self.model_menubutton.config( text=MODEL_STRINGS[self.model_index][0] )
+        self.image_frame._update_image()
         
     def _do_update_ui_scale(self, scale_factor):
         self.ui_scale = scale_factor
