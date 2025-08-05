@@ -909,8 +909,8 @@ class ImageGenerator(tk.Tk):
                 dummy_A_frame.pack(side="left", expand=True, fill="x")
                 
                 # ttk doesn't have Scale with showvalue; using a workaround
-                self.steps_slider = ttk.Scale(
-                    dummy_A_frame, from_=1, to=64, orient="horizontal"
+                self.steps_slider = tk.Scale(
+                    dummy_A_frame, from_=1, to=64, resolution=1, orient="horizontal", showvalue=False
                 )
                 self.steps_slider.set(self.n_steps)
                 self.steps_slider.config(command=self._update_n_steps_scale)
@@ -921,8 +921,8 @@ class ImageGenerator(tk.Tk):
                 dummy_B_frame = ttk.Frame(controls_frame)
                 dummy_B_frame.pack(side="left", expand=True, fill="x")
                 
-                self.scale_slider = ttk.Scale(
-                    dummy_B_frame, from_=0.2, to=1.0, orient="horizontal"
+                self.scale_slider = tk.Scale(
+                    dummy_B_frame, from_=0.2, to=1.0, resolution=0.05, orient="horizontal", showvalue=False
                 )
                 self.scale_slider.set(self.image_scale)
                 self.scale_slider.config(command=self._update_image_scale)
@@ -931,8 +931,8 @@ class ImageGenerator(tk.Tk):
                 dummy_C_frame = ttk.Frame(controls_frame)
                 dummy_C_frame.pack(side="right", expand=False, fill="x")
                 
-                self.ui_slider = ttk.Scale(
-                    dummy_C_frame, from_=0.5, to=3.5, orient="horizontal"
+                self.ui_slider = tk.Scale(
+                    dummy_C_frame, from_=0.5, to=3.5, resolution=0.1, orient="horizontal", showvalue=False
                 )
                 self.ui_slider.set(self.ui_scale)
                 self.ui_slider.config(command=self._update_ui_scale)
