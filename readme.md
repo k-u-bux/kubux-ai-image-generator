@@ -97,7 +97,6 @@ The application supports several models from [Together.ai](https://www.together.
 
 - FLUX.1 Pro
 - FLUX.1.1 Pro
-- Stable Diffusion XL 1.0 (broken)
 - FLUX.1 Schnell (including Free tier)
 - FLUX.1 Dev (with LoRA support)
 - FLUX.1 Canny (edge-based conditioning)

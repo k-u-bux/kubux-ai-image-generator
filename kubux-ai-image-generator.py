@@ -43,7 +43,7 @@ ai_features_enabled = bool(TOGETHER_API_KEY)
 
 MODEL_STRINGS = [
     ("FLUX.1 Pro", "black-forest-labs/FLUX.1-pro"),
-    ("Stable Diffusion XL 1.0", "stabilityai/stable-diffusion-xl-base-1.0"),
+#    ("Stable Diffusion XL 1.0", "stabilityai/stable-diffusion-xl-base-1.0"),
     ("FLUX.1 Schnell", "black-forest-labs/FLUX.1-schnell"),
     ("FLUX.1.1 Pro", "black-forest-labs/FLUX.1.1-pro"),
     ("FLUX.1 Dev", "black-forest-labs/FLUX.1-dev"),
@@ -525,10 +525,9 @@ class FullscreenImageViewer(tk.Toplevel):
             self.destroy()
 
     def _update_image(self):
-        """Update the displayed image based on current zoom and size."""
         w, h = self.get_aspect_ratio( self.master.image_scale )
-        self.title(f"{w} x {h} @ {self.master.n_steps} steps with {MODEL_STRINGS[self.master.model_index][1]}")
-        # print(f"geometry = {self.geometry()}")
+        self.title(f"{w} x {h} [{(w/h):.3f}] @ {self.master.n_steps} steps with {MODEL_STRINGS[self.master.model_index][1]}")
+        self.master.set_title(f"{w} x {h} [{(w/h):.3f}] @ {self.master.n_steps} steps with {MODEL_STRINGS[self.master.model_index][1]}")
         if not self.is_fullscreen:
             self.master.image_win_geometry = self.geometry()
         
@@ -942,6 +941,10 @@ class ImageGenerator(tk.Tk):
                 dummy_C_label.pack(side="right", padx=(12,0))
 
         if True:
+            self.settings_label = ttk.Label(self.main_container, style='TLabel')
+            self.settings_label.pack(side="top", padx=(2,2))
+                                     
+        if True:
             # Use style to control sash appearance
             self.paned_win = ttk.PanedWindow(self.main_container, orient="vertical", style='Sash.TPanedwindow')
             self.paned_win.pack(side="bottom", expand=True, fill="both")
@@ -991,6 +994,9 @@ class ImageGenerator(tk.Tk):
                 
         self.spawn_image_frame()
 
+    def set_title(self, title):
+        self.settings_label.config(text=title)
+        
     def spawn_image_frame(self):
         self.image_frame = FullscreenImageViewer(self, title="set aspect ratio")
                 
