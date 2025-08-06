@@ -7,7 +7,7 @@ A desktop application for generating AI images using Together.ai's image generat
 ## Features
 
 - **Text-to-Image Generation**: Turn your text descriptions into images
-- **Intelligent Aspect Ratio Management**: Select the aspect ratio by resizing the view window
+- **Simple Aspect Ratio Management**: Select the aspect ratio by resizing the view window
 - **Full-Screen Image Viewer**: View generated images with zoom, pan, and fullscreen capabilities
 - **Prompt History**: Save and reuse successful prompts
 - **Native Look and Feel**: Automatically detects and uses your system's UI font settings
@@ -19,6 +19,14 @@ A desktop application for generating AI images using Together.ai's image generat
 - **Organized Storage**: Images are saved in categorized directories based on prompts
 
 ## Installation
+
+### Setup the API key
+
+- You need an API key from Together.ai. You can get one at [together.ai](https://together.ai))
+- Create a `.env` file in your home directory with your API key:
+   ```
+   TOGETHER_API_KEY=your_api_key_here
+   ```
 
 ### Using Nix (Recommended)
 
@@ -41,7 +49,6 @@ nix profile install github:k-u-bux/kubux-image-manager
 - python-dotenv
 - requests
 - together 1.5.21 or compatible version
-- Together.ai API key (get one at [together.ai](https://together.ai))
 
 #### Setup
 
@@ -56,15 +63,16 @@ nix profile install github:k-u-bux/kubux-image-manager
    pip install pillow requests python-dotenv together==1.5.21
    ```
 
-3. Create a `.env` file in the project directory with your API key:
-   ```
-   TOGETHER_API_KEY=your_api_key_here
-   ```
-
 ## Usage
 
 ### Running the Application
 
+Nix will put the program in your path:
+```bash
+kubux-ai-image-generator
+```
+
+For manual install, you will have to run the python interpreter:
 ```bash
 python kubux-ai-image-generator.py
 ```
