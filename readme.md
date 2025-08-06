@@ -17,7 +17,7 @@ A desktop application for generating AI images using Together.ai's image generat
   - Customize UI scaling to suit your display
   - Choose from a variety of AI models from Together.ai
 - **Organized Storage**: Images generated from the same data are saved in the same directory
-- **Settings are persitent between runs of the program
+- **Settings**: The app configuratoin is persitent between runs of the program
 
 ## Installation
 
