@@ -1029,8 +1029,9 @@ class ImageGenerator(tk.Tk):
         update_widget_fonts(self, self.main_font)
     
     def _add_to_history(self, history, entry):
-        if entry in history: history.remove(entry) 
-        history.insert(0, entry)
+        while entry in history: history.remove(entry)
+        if entry:
+            history.insert(0, entry)
     
     def _center_toplevel_window(self, toplevel_window):
         toplevel_window.update_idletasks() 
