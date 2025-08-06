@@ -69,6 +69,11 @@ NEG_PROMPT_HISTORY_FILE = os.path.join(CONFIG_DIR, "neg_prompt_history.json")
 CONTEXT_HISTORY_FILE = os.path.join(CONFIG_DIR, "context_history.json")
 APP_SETTINGS_FILE = os.path.join(CONFIG_DIR, "app_settings.json")    
 
+BUTTON_RELIEF="flat"
+SCALE_RELIEF="flat"
+SCROLLBAR_RELIEF="flat"
+
+
 os.makedirs(DOWNLOAD_DIR, exist_ok=True)
 os.makedirs(CONFIG_DIR, exist_ok=True)
 
@@ -360,11 +365,11 @@ def generate_image(prompt, width, height, model, steps, neg_prompt, context,
         error_callback("API Error", message)
         return None
 
-def download_image(url, file_name, prompt, neg_prompt, context,
+def download_image(url, file_name, prompt, neg_prompt, context, download_dir,
                    error_callback=fallback_show_error):
     key = f"{[ prompt, neg_prompt, context]}"
     prompt_dir = hashlib.sha256(key.encode('utf-8')).hexdigest()
-    save_path = os.path.join(DOWNLOAD_DIR,prompt_dir,file_name)
+    save_path = os.path.join(download_dir, prompt_dir, file_name)
     tmp_save_path = save_path + "-tmp"
     try:
         response = requests.get(url, stream=True)
@@ -395,7 +400,7 @@ def download_image(url, file_name, prompt, neg_prompt, context,
         error_callback("Download Error", message)
         return None
     try:
-        link_path=os.path.join(DOWNLOAD_DIR, os.path.basename(file_name))
+        link_path=os.path.join(download_dir, os.path.basename(file_name))
         os.symlink(save_path, link_path)
         return link_path
     except Exception as e:
@@ -782,6 +787,250 @@ class FullscreenImageViewer(tk.Toplevel):
             self.canvas.xview_moveto(max(0, min(1, x_view_fraction)))
             self.canvas.yview_moveto(max(0, min(1, y_view_fraction)))
 
+
+class LongMenu(tk.Toplevel):
+    def __init__(self, master, default_option, other_options, font=None, x_pos=None, y_pos=None):
+        super().__init__(master)
+        self.overrideredirect(True) # Remove window decorations (title bar, borders)
+        self.transient(master)      # Tie to master window
+        # self.grab_set()             # Make it modal, redirect all input here
+
+        self.result = default_option
+        self._options = other_options
+
+        self._main_font = font if font else ("TkDefaultFont", 12, "normal")
+
+        self._listbox_frame = ttk.Frame(self)
+        self._listbox_frame.pack(padx=10, pady=10, fill="both", expand=True)
+
+        self._listbox = tk.Listbox(
+            self._listbox_frame,
+            selectmode=tk.SINGLE,
+            font=self._main_font,
+            height=15
+        )
+        self._listbox.pack(side="left", fill="both", expand=True)
+
+        self._scrollbar = tk.Scrollbar(self._listbox_frame, relief=SCROLLBAR_RELIEF, orient="vertical", command=self._listbox.yview)
+        self._scrollbar.pack(side="right", fill="y")
+        self._listbox.config(yscrollcommand=self._scrollbar.set)
+
+        # Populate the _listbox
+        for option_name in other_options:
+            self._listbox.insert(tk.END, option_name)
+
+        # --- Bindings ---
+        self._listbox.bind("<<ListboxSelect>>", self._on_listbox_select)
+        self._listbox.bind("<Double-Button-1>", self._on_double_click) # Double-click to select and close
+        self.bind("<Return>", self._on_return_key) # Enter key to select and close
+        self.bind("<Escape>", self._cancel) # Close on Escape key
+        self.bind("<FocusOut>", self._on_focus_out)
+        
+        # --- Positioning and Focus ---
+        self.update_idletasks()
+        self.grab_set() 
+
+        if x_pos is None or y_pos is None:
+            master_x = master.winfo_x()
+            master_y = master.winfo_y()
+            master_h = master.winfo_height()
+            x_pos = master_x
+            y_pos = master_y + master_h
+
+        screen_width = self.winfo_screenwidth()
+        popup_w = self.winfo_width()
+        if x_pos + popup_w > screen_width:
+            x_pos = screen_width - popup_w - 5 # 5 pixels margin
+            
+        # Adjust if menu would go off-screen downwards (or upwards if preferred)
+        screen_height = self.winfo_screenheight()
+        popup_h = self.winfo_height()
+        if y_pos + popup_h > screen_height:
+            y_pos = screen_height - popup_h - 5 # 5 pixels margin
+            
+        self.geometry(f"+{int(x_pos)}+{int(y_pos)}")        # Center the window relative to its master
+
+        self._listbox.focus_set() # Set focus to the _listbox for immediate keyboard navigation
+        self.wait_window(self) # Make the dialog modal until it's destroyed
+
+    def _on_listbox_select(self, event):
+        self._exit_ok()
+
+    def _on_double_click(self, event):
+        self._exit_ok()
+
+    def _on_return_key(self, event):
+        self._exit_ok()
+
+    def _exit_ok(self):
+        selected_indices = self._listbox.curselection()
+        if selected_indices:
+            # Store the selected directory name, not the full path yet
+            self.result = self._options[selected_indices[0]]
+        self.destroy()
+
+    def _cancel(self, event=None):
+        self.result = None
+        self.destroy()
+
+    def _on_focus_out(self, event):
+        # If the widget losing focus is not a child of this menu (e.g., clicking outside)
+        # then close the menu.
+        if self.winfo_exists() and not self.focus_get() in self.winfo_children():
+            self._cancel()
+
+        
+class BreadCrumNavigator(ttk.Frame):
+    def __init__(self, master, on_navigate_callback=None, font=None,
+                 long_press_threshold_ms=400, drag_threshold_pixels=5):
+        
+        super().__init__(master)
+        self._on_navigate_callback = on_navigate_callback
+        self._current_path = ""
+
+        self._LONG_PRESS_THRESHOLD_MS = long_press_threshold_ms
+        self._DRAG_THRESHOLD_PIXELS = drag_threshold_pixels
+
+        self._long_press_timer_id = None
+        self._press_start_time = 0
+        self._press_x = 0
+        self._press_y = 0
+        self._active_button = None 
+
+        if isinstance(font, tkFont.Font):
+            self.btn_font = (
+                font.actual('family'),
+                font.actual('size'),
+                font.actual('weight') 
+            )
+        elif isinstance(font, (tuple, str)):
+            self.btn_font = font
+        else:
+            self.btn_font = ("TkDefaultFont", 10, "normal") 
+
+    def set_path(self, path):
+        if not os.path.isdir(path):
+            print(f"Warning: Path '{path}' is not a directory. Cannot set breadcrumbs.")
+            return
+
+        self._current_path = os.path.normpath(path)
+        self._update_breadcrumbs()
+
+    def _update_breadcrumbs(self):
+        for widget in self.winfo_children():
+            widget.destroy()
+
+        btn_list = []
+        current_display_path = self._current_path
+        while len(current_display_path) > 1: 
+            path = current_display_path
+            current_display_path = os.path.dirname(path)
+            btn_text = os.path.basename(path)
+            if btn_text == '': 
+                btn_text = os.path.sep
+            btn = tk.Button(self, text=btn_text, relief=BUTTON_RELIEF, font=self.btn_font)
+            btn.path = path
+            btn.bind("<ButtonPress-1>", self._on_button_press)
+            btn.bind("<ButtonRelease-1>", self._on_button_release)
+            btn.bind("<Motion>", self._on_button_motion)
+            btn_list.insert( 0, btn )
+
+        btn_text="//"
+        btn = tk.Button(self, text=btn_text, relief=BUTTON_RELIEF, font=self.btn_font)
+        btn.path = current_display_path
+        btn.bind("<ButtonPress-1>", self._on_button_press)
+        btn.bind("<ButtonRelease-1>", self._on_button_release)
+        btn.bind("<Motion>", self._on_button_motion)
+        btn_list.insert( 0, btn )
+
+        dummy_frame = tk.Frame(self)
+        dummy_frame.pack(side="right", fill="x", expand=True)
+        for i, btn in enumerate( reversed(btn_list) ):
+            btn.pack(side="right")
+            if i + 1< len(btn_list):
+                ttk.Label(self, text="/").pack(side="right")
+            if i == 0:
+                btn.bind("<ButtonPress-1>", self._on_button_press_menu)
+
+    def _trigger_navigate(self, path):
+        if self._on_navigate_callback:
+            self._on_navigate_callback(path)
+
+    def _on_button_press_menu(self, event):
+        self._show_subdirectory_menu( event.widget )
+            
+    def _on_button_press(self, event):
+        self._press_start_time = time.time()
+        self._press_x, self._press_y = event.x_root, event.y_root
+        self._active_button = event.widget
+        self._long_press_timer_id = self.after(self._LONG_PRESS_THRESHOLD_MS,
+                                               lambda: self._on_long_press_timeout(self._active_button))
+
+    def _on_button_release(self, event):
+        if self._long_press_timer_id:
+            self.after_cancel(self._long_press_timer_id)
+            self._long_press_timer_id = None
+
+        if self._active_button:
+            dist = (abs(event.x_root - self._press_x)**2 + abs(event.y_root - self._press_y)**2)**0.5
+            if dist < self._DRAG_THRESHOLD_PIXELS:
+                if (time.time() - self._press_start_time) * 1000 < self._LONG_PRESS_THRESHOLD_MS:
+                    path = self._active_button.path
+                    if path and self._on_navigate_callback:
+                        self._on_navigate_callback(path)
+            self._active_button = None
+
+    def _on_button_motion(self, event):
+        if self._active_button and self._long_press_timer_id:
+            dist = (abs(event.x_root - self._press_x)**2 + abs(event.y_root - self._press_y)**2)**0.5
+            if dist > self._DRAG_THRESHOLD_PIXELS:
+                self.after_cancel(self._long_press_timer_id)
+                self._long_press_timer_id = None
+                self._active_button = None
+
+    def _on_long_press_timeout(self, button):
+        if self._active_button is button:
+            self._show_subdirectory_menu(button)
+            self._long_press_timer_id = None
+
+    def _show_subdirectory_menu(self, button):
+        path = button.path
+        selected_path = path
+
+        all_entries = os.listdir(path)
+        subdirs = []
+        hidden_subdirs = []
+        for entry in all_entries:
+            full_path = os.path.join( path, entry )
+            if os.path.isdir( full_path ):
+                if entry.startswith('.'):
+                    hidden_subdirs.append(entry)
+                else:
+                    subdirs.append(entry)
+        subdirs.sort()
+        hidden_subdirs.sort()
+        sorted_subdirs = subdirs + hidden_subdirs
+        
+        if sorted_subdirs:
+            button_x = button.winfo_rootx()
+            button_y = button.winfo_rooty()
+            button_height = button.winfo_height()
+            menu_x = button_x
+            menu_y = button_y + button_height
+            selector_dialog = LongMenu(
+                button,
+                None,
+                sorted_subdirs,
+                font=self.btn_font,
+                x_pos=menu_x,
+                y_pos=menu_y
+            )
+            selected_name = selector_dialog.result
+            if selected_name:
+                selected_path = os.path.join(path, selected_name)
+                
+        self._trigger_navigate(selected_path)
+
                 
 class ImageGenerator(tk.Tk):
     def __init__(self):
@@ -838,7 +1087,8 @@ class ImageGenerator(tk.Tk):
         except (json.JSONDecodeError, Exception) as e:
             print(f"Error loading app settings, initializing defaults: {e}")
             self.app_settings = {}
-        
+
+        self.download_dir = self.app_settings.get("download_dir", DOWNLOAD_DIR)
         self.ui_scale = self.app_settings.get("ui_scale", 1.0)
         self.main_win_geometry = self.app_settings.get("main_win_geometry", "1200x800")
         self.image_win_geometry = self.app_settings.get("image_win_geometry", "1200x800")
@@ -853,6 +1103,7 @@ class ImageGenerator(tk.Tk):
             if not hasattr(self, 'app_settings'):
                 self.app_settings = {}
 
+            self.app_settings["download_dir"] = self.download_dir
             self.app_settings["ui_scale"] = self.ui_scale
             self.app_settings["main_win_geometry"] = self.geometry()
             self.app_settings["image_win_geometry"] = self.image_frame.geometry()
@@ -943,7 +1194,16 @@ class ImageGenerator(tk.Tk):
         if True:
             self.settings_label = ttk.Label(self.main_container, style='TLabel')
             self.settings_label.pack(side="top", padx=(2,2))
-                                     
+
+        if True:
+            self.navigator = BreadCrumNavigator(
+                self.main_container,
+                on_navigate_callback=self._update_download_dir,
+                font=self.main_font,
+            )
+            self.navigator.pack(side="bottom", fill="x", expand=True, padx=5)            
+            self.navigator.set_path(self.download_dir)
+            
         if True:
             # Use style to control sash appearance
             self.paned_win = ttk.PanedWindow(self.main_container, orient="vertical", style='Sash.TPanedwindow')
@@ -988,6 +1248,7 @@ class ImageGenerator(tk.Tk):
                 self.context_text_widget = tk.Text(context_frame_inner, wrap="word", relief="sunken", borderwidth=2, font=self.main_font)
                 self.context_text_widget.pack(fill="both", expand=True)
 
+
         self.update_idletasks()
         self.paned_win.sashpos( 0, self.sash_pos_top )
         self.paned_win.sashpos( 1, self.sash_pos_bot )
@@ -999,7 +1260,11 @@ class ImageGenerator(tk.Tk):
         
     def spawn_image_frame(self):
         self.image_frame = FullscreenImageViewer(self, title="set aspect ratio")
-                
+
+    def _update_download_dir(self, path):
+        self.download_dir = path;
+        self.navigator.set_path( self.download_dir )
+        
     def _update_ui_scale(self, value):
         if self._ui_scale_job: self.after_cancel(self._ui_scale_job)
         self._ui_scale_job = self.after(400, lambda: self._do_update_ui_scale(float(value)))
@@ -1118,7 +1383,7 @@ class ImageGenerator(tk.Tk):
                                                                                       font=self.main_font))
         if image_url:
             file_name = unique_name("dummy.png","generated")
-            save_path = download_image(image_url, file_name, prompt, neg_prompt, context,
+            save_path = download_image(image_url, file_name, prompt, neg_prompt, context, self.download_dir,
                                        error_callback=lambda t, m : custom_message_dialog(parent=self,
                                                                                           title=t,
                                                                                           message=m,

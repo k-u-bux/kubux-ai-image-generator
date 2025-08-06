@@ -16,7 +16,8 @@ A desktop application for generating AI images using Together.ai's image generat
   - Adjust image size/resolution scale
   - Customize UI scaling to suit your display
   - Choose from a variety of AI models from Together.ai
-- **Organized Storage**: Images are saved in categorized directories based on prompts
+- **Organized Storage**: Images generated from the same data are saved in the same directory
+- **Settings are persitent between runs of the program
 
 ## Installation
 
@@ -119,9 +120,12 @@ The application stores its configuration in:
 - `~/.config/kubux-ai-image-generator/prompt_history.json` - Saved prompts
 - `~/.config/kubux-ai-image-generator/neg_prompt_history.json` - Saved negative prompts
 - `~/.config/kubux-ai-image-generator/context_history.json` - Saved context image URLs
+You do not need to edit these files. Current settings are saved automatically.
 
-Generated images are saved to:
+Generated images are saved by default to:
 - `~/Pictures/kubux-ai-image-generator/`
+This can be changed through the navigation bar at the bottom.
+
 
 ## Troubleshooting
 
