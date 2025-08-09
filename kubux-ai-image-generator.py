@@ -537,9 +537,18 @@ class FullscreenImageViewer(tk.Toplevel):
             self.destroy()
 
     def _update_image(self):
+        screen_aspect_ratio = get_to_root(self).winfo_screenwidth() / get_to_root(self).winfo_screenheight()
         w, h = self.get_aspect_ratio( self.master.image_scale )
-        self.title(f"{w} x {h} [{(w/h):.3f}] @ {self.master.n_steps} steps with {MODEL_STRINGS[self.master.model_index][1]}")
-        self.master.set_title(f"{w} x {h} [{(w/h):.3f}] @ {self.master.n_steps} steps with {MODEL_STRINGS[self.master.model_index][1]}")
+        image_aspect_ratio = w / h
+        delta = screen_aspect_ratio - image_aspect_ratio
+        is_close = ( -0.05 < delta ) and ( delta < 0.05 )
+        if is_close:     
+            settings_string = f"{w} / {h} = {(w/h):.3f} (roughly screen: {screen_aspect_ratio:.3f}) @ {self.master.n_steps} steps with {MODEL_STRINGS[self.master.model_index][1]}"
+        else:
+            settings_string = f"{w} / {h} ={(w/h):.3f} @ {self.master.n_steps} steps with {MODEL_STRINGS[self.master.model_index][1]}"
+
+        self.title(settings_string)
+        self.master.set_title(settings_string)
         if not self.is_fullscreen:
             self.master.image_win_geometry = self.geometry()
         
