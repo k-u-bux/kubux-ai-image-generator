@@ -37,6 +37,7 @@ from together import Together
 
 # Load environment variables
 load_dotenv()
+
 # --- Configuration ---
 TOGETHER_API_KEY = os.getenv("TOGETHER_API_KEY")
 ai_features_enabled = bool(TOGETHER_API_KEY)
@@ -410,6 +411,12 @@ def download_image(url, file_name, prompt, neg_prompt, context, download_dir,
         return None
 
 # --- widgets ---
+
+def get_to_root(widget):
+    while widget.master is not None:
+        widget = widget.master
+    return widget
+
 
 class FullscreenImageViewer(tk.Toplevel):
     """
@@ -881,7 +888,7 @@ class LongMenu(tk.Toplevel):
 
         
 class BreadCrumNavigator(ttk.Frame):
-    def __init__(self, master, on_navigate_callback=None, font=None,
+    def __init__(self, master, on_navigate_callback=None,
                  long_press_threshold_ms=400, drag_threshold_pixels=5):
         
         super().__init__(master)
@@ -896,17 +903,6 @@ class BreadCrumNavigator(ttk.Frame):
         self._press_x = 0
         self._press_y = 0
         self._active_button = None 
-
-        if isinstance(font, tkFont.Font):
-            self.btn_font = (
-                font.actual('family'),
-                font.actual('size'),
-                font.actual('weight') 
-            )
-        elif isinstance(font, (tuple, str)):
-            self.btn_font = font
-        else:
-            self.btn_font = ("TkDefaultFont", 10, "normal") 
 
     def set_path(self, path):
         if not os.path.isdir(path):
@@ -928,7 +924,8 @@ class BreadCrumNavigator(ttk.Frame):
             btn_text = os.path.basename(path)
             if btn_text == '': 
                 btn_text = os.path.sep
-            btn = tk.Button(self, text=btn_text, relief=BUTTON_RELIEF, font=self.btn_font)
+            btn = tk.Button(self, text=btn_text, relief=BUTTON_RELIEF, 
+                            font=get_to_root(self).main_font)
             btn.path = path
             btn.bind("<ButtonPress-1>", self._on_button_press)
             btn.bind("<ButtonRelease-1>", self._on_button_release)
@@ -936,7 +933,8 @@ class BreadCrumNavigator(ttk.Frame):
             btn_list.insert( 0, btn )
 
         btn_text="//"
-        btn = tk.Button(self, text=btn_text, relief=BUTTON_RELIEF, font=self.btn_font)
+        btn = tk.Button(self, text=btn_text, relief=BUTTON_RELIEF, 
+                        font=get_to_root(self).main_font)
         btn.path = current_display_path
         btn.bind("<ButtonPress-1>", self._on_button_press)
         btn.bind("<ButtonRelease-1>", self._on_button_release)
@@ -1021,7 +1019,7 @@ class BreadCrumNavigator(ttk.Frame):
                 button,
                 None,
                 sorted_subdirs,
-                font=self.btn_font,
+                font=get_to_root(self).main_font,
                 x_pos=menu_x,
                 y_pos=menu_y
             )
@@ -1198,8 +1196,7 @@ class ImageGenerator(tk.Tk):
         if True:
             self.navigator = BreadCrumNavigator(
                 self.main_container,
-                on_navigate_callback=self._update_download_dir,
-                font=self.main_font,
+                on_navigate_callback=self._update_download_dir
             )
             self.navigator.pack(side="bottom", fill="x", expand=True, padx=5)            
             self.navigator.set_path(self.download_dir)
