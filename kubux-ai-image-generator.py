@@ -46,6 +46,7 @@ MODEL_STRINGS = [
     ("FLUX.1 Pro", "black-forest-labs/FLUX.1-pro"),
 #    ("Stable Diffusion XL 1.0", "stabilityai/stable-diffusion-xl-base-1.0"),
     ("FLUX.1 Schnell", "black-forest-labs/FLUX.1-schnell"),
+    ("FLUX.1 Krea Dev", "black-forest-labs/FLUX.1-krea-dev"),
     ("FLUX.1.1 Pro", "black-forest-labs/FLUX.1.1-pro"),
     ("FLUX.1 Dev", "black-forest-labs/FLUX.1-dev"),
     ("FLUX.1 Schnell (Free)", "black-forest-labs/FLUX.1-schnell-Free"),
@@ -54,6 +55,8 @@ MODEL_STRINGS = [
     ("FLUX.1 Redux (image variation, restyling)", "black-forest-labs/FLUX.1-redux"),
     ("FLUX.1 Dev (LoRA support)", "black-forest-labs/FLUX.1-dev-lora"),
     ("FLUX.1 Kontext Dev (text and image input)", "black-forest-labs/FLUX.1-kontext-dev"),
+    ("FLUX.1 Kontext Pro (text and image input)", "black-forest-labs/FLUX.1-kontext-pro"),
+    ("FLUX.1 Kontext Max (text and image input)", "black-forest-labs/FLUX.1-kontext-max"),
 ]
 
 SUPPORTED_IMAGE_EXTENSIONS = (
@@ -434,7 +437,6 @@ class FullscreenImageViewer(tk.Toplevel):
         """
         super().__init__(master,class_="kubux-ai-image-generator")
 
-        self.master = master
         self.image_path = image_path
         self.original_image = None
         self.display_image = None
