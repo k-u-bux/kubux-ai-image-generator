@@ -1181,7 +1181,7 @@ class ImageGenerator(tk.Tk):
                 dummy_B_frame.pack(side="left", expand=True, fill="x")
                 
                 self.scale_slider = tk.Scale(
-                    dummy_B_frame, from_=0.2, to=1.0, resolution=0.05, orient="horizontal", showvalue=False
+                    dummy_B_frame, from_=0.2, to=1.0, resolution=0.025, orient="horizontal", showvalue=False
                 )
                 self.scale_slider.set(self.image_scale)
                 self.scale_slider.config(command=self._update_image_scale)
