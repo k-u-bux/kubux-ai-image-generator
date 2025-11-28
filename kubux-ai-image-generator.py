@@ -43,6 +43,8 @@ TOGETHER_API_KEY = os.getenv("TOGETHER_API_KEY")
 ai_features_enabled = bool(TOGETHER_API_KEY)
 
 MODEL_STRINGS = [
+    ("FLUX.2 Pro", "black-forest-labs/FLUX.2-pro"),
+    ("FLUX.1 Dev", "black-forest-labs/FLUX.2-dev"),
     ("FLUX.1 Pro", "black-forest-labs/FLUX.1-pro"),
 #    ("Stable Diffusion XL 1.0", "stabilityai/stable-diffusion-xl-base-1.0"),
     ("FLUX.1 Schnell", "black-forest-labs/FLUX.1-schnell"),
