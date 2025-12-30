@@ -44,7 +44,7 @@ ai_features_enabled = bool(TOGETHER_API_KEY)
 
 MODEL_STRINGS = [
     ("FLUX.2 Pro", "black-forest-labs/FLUX.2-pro"),
-    ("FLUX.1 Dev", "black-forest-labs/FLUX.2-dev"),
+    ("FLUX.2 Dev", "black-forest-labs/FLUX.2-dev"),
     ("FLUX.1 Pro", "black-forest-labs/FLUX.1-pro"),
 #    ("Stable Diffusion XL 1.0", "stabilityai/stable-diffusion-xl-base-1.0"),
     ("FLUX.1 Schnell", "black-forest-labs/FLUX.1-schnell"),
@@ -352,7 +352,7 @@ def good_dimensions(image_width, image_height, scale=1.0, delta=0.05):
     return best_w * 32, best_h * 32
 
 
-def generate_image(prompt, width, height, model, steps, neg_prompt, context,
+def generate_image(prompt, width, height, model, steps, reference_strength, neg_prompt, context,
                    error_callback=fallback_show_error):
     client = Together(api_key=TOGETHER_API_KEY)
     try:
@@ -361,9 +361,11 @@ def generate_image(prompt, width, height, model, steps, neg_prompt, context,
             model=model,
             width=width,
             height=height,
-            steps=steps,
             negative_prompt=neg_prompt,
-            image_url=context
+            image_url=context,
+            disable_safety_checker=True,
+            steps=steps,
+            reference_strength=reference_strength,
         )
         return response.data[0].url
     except Exception as e:
@@ -1385,6 +1387,7 @@ class ImageGenerator(tk.Tk):
     def _run_generation_task(self, prompt, width, height, neg_prompt, context):
         image_url = generate_image(prompt, width, height, model = MODEL_STRINGS[self.model_index][1],
                                    steps = self.n_steps,
+                                   reference_strength = 8,
                                    neg_prompt = neg_prompt,
                                    context = context,
                                    error_callback=lambda t, m : custom_message_dialog(parent=self,
