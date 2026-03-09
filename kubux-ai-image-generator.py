@@ -42,23 +42,35 @@ load_dotenv()
 TOGETHER_API_KEY = os.getenv("TOGETHER_API_KEY")
 ai_features_enabled = bool(TOGETHER_API_KEY)
 
-MODEL_STRINGS = [
-    ("FLUX.2 Pro", "black-forest-labs/FLUX.2-pro"),
-    ("FLUX.2 Dev", "black-forest-labs/FLUX.2-dev"),
-    ("FLUX.1 Pro", "black-forest-labs/FLUX.1-pro"),
-#    ("Stable Diffusion XL 1.0", "stabilityai/stable-diffusion-xl-base-1.0"),
-    ("FLUX.1 Schnell", "black-forest-labs/FLUX.1-schnell"),
-    ("FLUX.1 Krea Dev", "black-forest-labs/FLUX.1-krea-dev"),
-    ("FLUX.1.1 Pro", "black-forest-labs/FLUX.1.1-pro"),
-    ("FLUX.1 Dev", "black-forest-labs/FLUX.1-dev"),
-    ("FLUX.1 Schnell (Free)", "black-forest-labs/FLUX.1-schnell-Free"),
-    ("FLUX.1 Canny (for edge based conditions)", "black-forest-labs/FLUX.1-canny"),
-    ("FLUX.1 Depth (for depth based conditioning)", "black-forest-labs/FLUX.1-depth"),
-    ("FLUX.1 Redux (image variation, restyling)", "black-forest-labs/FLUX.1-redux"),
-    ("FLUX.1 Dev (LoRA support)", "black-forest-labs/FLUX.1-dev-lora"),
-    ("FLUX.1 Kontext Dev (text and image input)", "black-forest-labs/FLUX.1-kontext-dev"),
-    ("FLUX.1 Kontext Pro (text and image input)", "black-forest-labs/FLUX.1-kontext-pro"),
-    ("FLUX.1 Kontext Max (text and image input)", "black-forest-labs/FLUX.1-kontext-max"),
+MODEL_SPECS = [
+    # (Display Name, Model ID, min_size, max_size, multiple_of, supports_steps, step_range, supports_image_url, supports_negative_prompt, supports_reference_strength)
+    ("FLUX.1 Kontext [max]", "black-forest-labs/FLUX.1-kontext-max", 256, 1440, 32, True, (1, 50), True, False, True),
+    ("FLUX.1 Kontext [pro]", "black-forest-labs/FLUX.1-kontext-pro", 256, 1440, 32, True, (1, 50), True, False, True),
+    ("FLUX.1 Krea [dev]", "black-forest-labs/FLUX.1-krea-dev", 256, 1440, 32, True, (20, 50), True, False, True),
+    ("FLUX.1 [pro]", "black-forest-labs/FLUX.1-pro", 256, 1440, 32, True, (15, 50), False, False, False),
+    ("FLUX.1 Schnell", "black-forest-labs/FLUX.1-schnell", 256, 1440, 32, True, (1, 12), False, False, False),
+    ("FLUX1.1 [pro]", "black-forest-labs/FLUX.1.1-pro", 256, 1440, 32, True, (1, 4), False, False, False),
+    ("FLUX.2 [dev]", "black-forest-labs/FLUX.2-dev", 400, 2048, 32, True, (20, 50), True, False, True),
+    ("FLUX.2 [flex]", "black-forest-labs/FLUX.2-flex", 400, 2048, 32, True, (15, 50), True, False, True),
+    ("FLUX.2 [pro]", "black-forest-labs/FLUX.2-pro", 400, 2752, 32, True, (15, 50), True, False, True),
+    ("ByteDance Seedream 3.0", "ByteDance-Seed/Seedream-3.0", 512, 2048, 64, True, (20, 40), True, True, True),
+    ("ByteDance Seedream 4.0", "ByteDance-Seed/Seedream-4.0", 512, 4096, 64, True, (20, 50), True, True, True),
+    ("Gemini Flash Image 2.5 (Nano Banana)", "google/flash-image-2.5", 256, 1536, 64, False, None, True, False, True),
+    ("Gemini 3 (Nano Banana 2 Pro)", "google/gemini-3-pro-image", 256, 2048, 64, False, None, True, False, True),
+    ("Google Imagen 4.0 Fast", "google/imagen-4.0-fast", 256, 1024, 64, False, None, False, False, False),
+    ("Google Imagen 4.0 Preview", "google/imagen-4.0-preview", 256, 2048, 64, False, None, True, False, True),
+    ("Google Imagen 4.0 Ultra", "google/imagen-4.0-ultra", 256, 2816, 64, False, None, True, False, True),
+    ("HiDream-I1-Dev", "HiDream-ai/HiDream-I1-Dev", 512, 1024, 64, True, (20, 30), True, True, True),
+    ("HiDream-I1-Fast", "HiDream-ai/HiDream-I1-Fast", 512, 1024, 64, True, (4, 12), False, True, False),
+    ("HiDream-I1-Full", "HiDream-ai/HiDream-I1-Full", 512, 2048, 64, True, (30, 50), True, True, True),
+    ("Ideogram 3.0", "ideogram/ideogram-3.0", 512, 1536, 1, False, None, True, True, True),
+    ("Dreamshaper", "Lykon/DreamShaper", 512, 1024, 8, True, (20, 50), False, True, False),
+    ("Qwen Image", "Qwen/Qwen-Image", 256, 1280, 32, True, (20, 40), True, True, True),
+    ("Juggernaut Lightning Flux by RunDiffusion", "Rundiffusion/Juggernaut-Lightning-Flux", 512, 1024, 32, True, (1, 8), False, False, False),
+    ("Juggernaut Pro Flux by RunDiffusion 1.0.0", "RunDiffusion/Juggernaut-pro-flux", 512, 1440, 32, True, (20, 50), False, False, False),
+    ("Stable Diffusion 3", "stabilityai/stable-diffusion-3-medium", 512, 1024, 64, True, (20, 50), False, True, False),
+    ("SD XL", "stabilityai/stable-diffusion-xl-base-1.0", 512, 1024, 8, True, (20, 50), False, True, False),
+    ("Wan 2.6 Image", "Wan-AI/Wan2.6-image", 512, 2048, 32, True, (20, 50), True, True, True),
 ]
 
 SUPPORTED_IMAGE_EXTENSIONS = (
@@ -356,17 +368,22 @@ def generate_image(prompt, width, height, model, steps, reference_strength, neg_
                    error_callback=fallback_show_error):
     client = Together(api_key=TOGETHER_API_KEY)
     try:
-        response = client.images.generate(
-            prompt=prompt,
-            model=model,
-            width=width,
-            height=height,
-            negative_prompt=neg_prompt,
-            image_url=context,
-            disable_safety_checker=True,
-            steps=steps,
-            reference_strength=reference_strength,
-        )
+        params = {
+            "prompt" : prompt,
+            "width" : width,
+            "height" : height,
+            "model" : model[1],
+            "disable_safety_checker" : True
+        }
+        if model[5]:
+            params[ "steps" ] = steps
+        if model[7]:
+            params[ "image_url" ] = context
+        if model[8]:
+            params[ "negative_prompt" ] = neg_prompt
+        if model[9]:
+            params[ "reference_strength" ] = reference_strength
+        response = client.images.generate( **params )
         return response.data[0].url
     except Exception as e:
         message = f"Failed to download image: {e}"
@@ -549,9 +566,9 @@ class FullscreenImageViewer(tk.Toplevel):
         delta = screen_aspect_ratio - image_aspect_ratio
         is_close = ( -0.05 < delta ) and ( delta < 0.05 )
         if is_close:     
-            settings_string = f"{w} / {h} = {(w/h):.3f} (roughly screen: {screen_aspect_ratio:.3f}) @ {self.master.n_steps} steps with {MODEL_STRINGS[self.master.model_index][1]}"
+            settings_string = f"{w} / {h} = {(w/h):.3f} (roughly screen: {screen_aspect_ratio:.3f}) @ {self.master.n_steps} steps with {MODEL_SPECS[self.master.model_index][1]}"
         else:
-            settings_string = f"{w} / {h} ={(w/h):.3f} @ {self.master.n_steps} steps with {MODEL_STRINGS[self.master.model_index][1]}"
+            settings_string = f"{w} / {h} ={(w/h):.3f} @ {self.master.n_steps} steps with {MODEL_SPECS[self.master.model_index][1]}"
 
         self.title(settings_string)
         self.master.set_title(settings_string)
@@ -1152,11 +1169,11 @@ class ImageGenerator(tk.Tk):
         if True:
             model_frame = ttk.Frame(self.main_container)
             model_frame.pack(side="top", expand=False, fill="x", pady=(5, 5), padx=(2,2))
-            self.model_menubutton = ttk.Menubutton(model_frame, text=MODEL_STRINGS[self.model_index][0], style='TMenubutton')
+            self.model_menubutton = ttk.Menubutton(model_frame, text=MODEL_SPECS[self.model_index][0], style='TMenubutton')
             model_menu = tk.Menu(self.model_menubutton, font=self.main_font)  # Menu cannot be replaced with ttk
             self.model_menubutton.config(menu=model_menu)
-            for i, (entry, model) in enumerate(MODEL_STRINGS):
-                model_menu.add_command(label=entry, command=lambda idx = i : self._set_model_index(idx))
+            for i, model in enumerate(MODEL_SPECS):
+                model_menu.add_command(label=model[0], command=lambda idx = i : self._set_model_index(idx))
             self.model_menubutton.pack(side="left", fill="x", expand=True, padx=(2,2), pady=(5,5))
         if True:
             controls_frame = ttk.Frame(self.main_container)
@@ -1291,7 +1308,7 @@ class ImageGenerator(tk.Tk):
         
     def _set_model_index(self, index):
         self.model_index = index;
-        self.model_menubutton.config( text=MODEL_STRINGS[self.model_index][0] )
+        self.model_menubutton.config( text=MODEL_SPECS[self.model_index][0] )
         self.image_frame._update_image()
         
     def _do_update_ui_scale(self, scale_factor):
@@ -1385,7 +1402,7 @@ class ImageGenerator(tk.Tk):
         threading.Thread(target=self._run_generation_task, args=(prompt, w, h, neg_prompt, context), daemon=True).start()
 
     def _run_generation_task(self, prompt, width, height, neg_prompt, context):
-        image_url = generate_image(prompt, width, height, model = MODEL_STRINGS[self.model_index][1],
+        image_url = generate_image(prompt, width, height, model = MODEL_SPECS[self.model_index],
                                    steps = self.n_steps,
                                    reference_strength = 8,
                                    neg_prompt = neg_prompt,
