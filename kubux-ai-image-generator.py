@@ -49,28 +49,28 @@ MODEL_SPECS = [
     ("FLUX.1 Krea [dev]", "black-forest-labs/FLUX.1-krea-dev", 256, 1440, 32, True, (20, 50), True, False, True),
     ("FLUX.1 [pro]", "black-forest-labs/FLUX.1-pro", 256, 1440, 32, True, (15, 50), False, False, False),
     ("FLUX.1 Schnell", "black-forest-labs/FLUX.1-schnell", 256, 1440, 32, True, (1, 12), False, False, False),
-    ("FLUX1.1 [pro]", "black-forest-labs/FLUX.1.1-pro", 256, 1440, 32, True, (1, 4), False, False, False),
-    ("FLUX.2 [dev]", "black-forest-labs/FLUX.2-dev", 400, 2048, 32, True, (20, 50), True, False, True),
-    ("FLUX.2 [flex]", "black-forest-labs/FLUX.2-flex", 400, 2048, 32, True, (15, 50), True, False, True),
-    ("FLUX.2 [pro]", "black-forest-labs/FLUX.2-pro", 400, 2752, 32, True, (15, 50), True, False, True),
-    ("ByteDance Seedream 3.0", "ByteDance-Seed/Seedream-3.0", 512, 2048, 64, True, (20, 40), True, True, True),
-    ("ByteDance Seedream 4.0", "ByteDance-Seed/Seedream-4.0", 512, 4096, 64, True, (20, 50), True, True, True),
-    ("Gemini Flash Image 2.5 (Nano Banana)", "google/flash-image-2.5", 256, 1536, 64, False, None, True, False, True),
-    ("Gemini 3 (Nano Banana 2 Pro)", "google/gemini-3-pro-image", 256, 2048, 64, False, None, True, False, True),
-    ("Google Imagen 4.0 Fast", "google/imagen-4.0-fast", 256, 1024, 64, False, None, False, False, False),
+    ("FLUX1.1 [pro]", "black-forest-labs/FLUX.1.1-pro", 256, 1440, 32, False, (1, 4), False, False, False),
+    ("FLUX.2 [dev]", "black-forest-labs/FLUX.2-dev", 400, 2048, 32, False, (20, 50), True, False, True),
+    ("FLUX.2 [flex]", "black-forest-labs/FLUX.2-flex", 400, 2048, 32, False, (15, 50), True, False, True),
+    ("FLUX.2 [pro]", "black-forest-labs/FLUX.2-pro", 400, 2752, 32, False, (15, 50), True, False, True),
+    ("ByteDance Seedream 3.0", "ByteDance-Seed/Seedream-3.0", 512, 2048, 64, False, (20, 40), True, True, True),  # '1024x1024', '864x1152', '1152x864', '1280x720', '720x1280', '832x1248', '1248x832', '1512x648'
+    ("ByteDance Seedream 4.0", "ByteDance-Seed/Seedream-4.0", 512, 4096, 64, False, (20, 50), True, True, True),
+    ("Gemini Flash Image 2.5 (Nano Banana)", "google/flash-image-2.5", 256, 1536, 64, False, None, True, False, True), # '1024x1024', '1248x832', '832x1248', '1184x864', '864x1184', '896x1152', '1152x896', '768x1344', '1344x768', '1536x672'
+    ("Gemini 3 (Nano Banana 2 Pro)", "google/gemini-3-pro-image", 256, 2048, 64, False, None, False, False, False),
+    ("Google Imagen 4.0 Fast", "google/imagen-4.0-fast", 256, 1024, 64, False, None, False, False, False), # '1024x1024', '768x1408', '1408x768', '896x1280', '1280x896'
     ("Google Imagen 4.0 Preview", "google/imagen-4.0-preview", 256, 2048, 64, False, None, True, False, True),
     ("Google Imagen 4.0 Ultra", "google/imagen-4.0-ultra", 256, 2816, 64, False, None, True, False, True),
     ("HiDream-I1-Dev", "HiDream-ai/HiDream-I1-Dev", 512, 1024, 64, True, (20, 30), True, True, True),
     ("HiDream-I1-Fast", "HiDream-ai/HiDream-I1-Fast", 512, 1024, 64, True, (4, 12), False, True, False),
     ("HiDream-I1-Full", "HiDream-ai/HiDream-I1-Full", 512, 2048, 64, True, (30, 50), True, True, True),
-    ("Ideogram 3.0", "ideogram/ideogram-3.0", 512, 1536, 1, False, None, True, True, True),
+    ("Ideogram 3.0", "ideogram/ideogram-3.0", 512, 1536, 1, False, None, True, True, True), # '1536x512', '1536x576', '1472x576', '1408x576', '1536x640', '1472x640', '1408x640', '1344x640', '1472x704', '1408x704', '1344x704', '1280x704', '1312x736', '1344x768', '1216x704', '1280x768', '1152x704', '1280x800', '1216x768', '1248x832', '1216x832', '1088x768', '1152x832', '1152x864', '1088x832', '1152x896', '1120x896', '1024x832', '1088x896', '960x832', '1024x896', '1088x960', '960x896', '1024x960', '1024x1024', '960x1024', '896x960', '960x1088', '896x1024', '832x960', '896x1088', '832x1024', '896x1120', '896x1152', '832x1088', '864x1152', '832x1152', '768x1088', '832x1216', '832x1248', '768x1216', '800x1280', '704x1152', '768x1280', '704x1216', '768x1344', '736x1312', '704x1280', '704x1344', '704x1408', '704x1472', '640x1344', '640x1408', '640x1472', '640x1536', '576x1408', '576x1472', '576x1536', '512x1536'
     ("Dreamshaper", "Lykon/DreamShaper", 512, 1024, 8, True, (20, 50), False, True, False),
     ("Qwen Image", "Qwen/Qwen-Image", 256, 1280, 32, True, (20, 40), True, True, True),
     ("Juggernaut Lightning Flux by RunDiffusion", "Rundiffusion/Juggernaut-Lightning-Flux", 512, 1024, 32, True, (1, 8), False, False, False),
     ("Juggernaut Pro Flux by RunDiffusion 1.0.0", "RunDiffusion/Juggernaut-pro-flux", 512, 1440, 32, True, (20, 50), False, False, False),
     ("Stable Diffusion 3", "stabilityai/stable-diffusion-3-medium", 512, 1024, 64, True, (20, 50), False, True, False),
     ("SD XL", "stabilityai/stable-diffusion-xl-base-1.0", 512, 1024, 8, True, (20, 50), False, True, False),
-    ("Wan 2.6 Image", "Wan-AI/Wan2.6-image", 512, 2048, 32, True, (20, 50), True, True, True),
+    ("Wan 2.6 Image", "Wan-AI/Wan2.6-image", 512, 2048, 32, False, (20, 50), True, True, True),
 ]
 
 SUPPORTED_IMAGE_EXTENSIONS = (
