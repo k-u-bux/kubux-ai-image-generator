@@ -46,12 +46,9 @@ ai_features_enabled = bool(TOGETHER_API_KEY)
 def ratio ( p ):
     return p[0]/p[1]
 
-def diagonal ( p ):
-    return ( sqrt( p[0]**2 + p[1]**2 ) )
-
-def within_bounds ( p, d_min, d_max ):
+def below_bound ( p, d_max ):
     d_sq = p[0]**2 + p[1]**2
-    return d_min**2 <= d_sq and d_sq <= d_max**2
+    return d_sq <= d_max**2
 
 def generate_formats_xy ( min_x, max_x, delta_x, min_y, max_y, delta_y ):
     x_range = range( min_x, max_x+1, delta_x )
@@ -87,14 +84,10 @@ def select_best_dimensions_from_model(canvas_width, canvas_height, model_formats
     diagonal_max = math.exp(scale) * 16
     
     # Iteratively expand upper limit until we find matching formats
-    filtered = []
+    filtered =  filter_formats( model_formats, lambda p: below_bound( p, diagonal_max ) )
     while not filtered:
-        filtered = filter_formats(model_formats, 
-                                 lambda p: diagonal(p) <= diagonal_max)
-        
-        if not filtered:
-            # Expand the upper limit
-            diagonal_max *= 1.25
+        diagonal_max *= 1.25
+        filtered =  filter_formats( model_formats, lambda p: below_bound( p, diagonal_max ) )
     
     # Find best aspect ratio match from filtered formats
     # If multiple formats have the same ratio, prefer the largest diagonal (best quality)
@@ -109,7 +102,7 @@ def select_best_dimensions_from_model(canvas_width, canvas_height, model_formats
         
         # Choose if: better ratio, OR (same ratio AND larger diagonal)
         if (ratio_diff < min_ratio_diff or 
-            (ratio_diff == min_ratio_diff and fmt_diagonal > max_diagonal)):
+            (ratio_diff <= min_ratio_diff+0.0001 and fmt_diagonal > max_diagonal)):
             min_ratio_diff = ratio_diff
             max_diagonal = fmt_diagonal
             best_format = fmt
