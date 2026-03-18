@@ -122,7 +122,7 @@ MODEL_SPECS = [
     ("FLUX1.1 [pro]", "black-forest-labs/FLUX.1.1-pro", generate_formats( 256, 1440, 32 ), False, (1, 4), False, False, False),
     ("FLUX.2 [dev]", "black-forest-labs/FLUX.2-dev", generate_formats( 400, 2048, 32 ), False, (20, 50), True, False, True),
     ("FLUX.2 [flex]", "black-forest-labs/FLUX.2-flex", generate_formats( 400, 2048, 32 ), False, (15, 50), True, False, True),
-    ("FLUX.2 [pro]", "black-forest-labs/FLUX.2-pro", generate_formats( 400, 2752, 32 ), False, (15, 50), True, False, True),
+    ("FLUX.2 [pro]", "black-forest-labs/FLUX.2-pro", generate_formats( 400, 2048, 16 ), False, (15, 50), True, False, True),
     ("ByteDance Seedream 3.0", "ByteDance-Seed/Seedream-3.0", [(1024, 1024), (864, 1152), (1152, 864), (1280, 720), (720, 1280), (832, 1248), (1248, 832), (1512, 648)], False, (20, 40), True, True, True),
     ("ByteDance Seedream 4.0", "ByteDance-Seed/Seedream-4.0", generate_formats( 512, 4096, 64 ), False, (20, 50), True, True, True),
     ("Gemini Flash Image 2.5 (Nano Banana)", "google/flash-image-2.5", [(1024, 1024), (1248, 832), (832, 1248), (1184, 864), (864, 1184), (896, 1152), (1152, 896), (768, 1344), (1344, 768), (1536, 672)], False, None, True, False, True),
