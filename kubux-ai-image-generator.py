@@ -46,9 +46,11 @@ ai_features_enabled = bool(TOGETHER_API_KEY)
 def ratio ( p ):
     return p[0]/p[1]
 
+def diagonal_sq ( p ):
+    return p[0]**2 + p[1]**2
+
 def below_bound ( p, d_max ):
-    d_sq = p[0]**2 + p[1]**2
-    return d_sq <= d_max**2
+    return diagonal_sq( p ) <= d_max**2
 
 def generate_formats_xy ( min_x, max_x, delta_x, min_y, max_y, delta_y ):
     x_range = range( min_x, max_x+1, delta_x )
@@ -93,18 +95,18 @@ def select_best_dimensions_from_model(canvas_width, canvas_height, model_formats
     # If multiple formats have the same ratio, prefer the largest diagonal (best quality)
     best_format = None
     min_ratio_diff = float('inf')
-    max_diagonal = -1
+    max_diagonal_sq = -1
     
     for fmt in filtered:
         fmt_ratio = ratio(fmt)
         ratio_diff = abs(fmt_ratio - target_ratio)
-        fmt_diagonal = diagonal(fmt)
+        fmt_diagonal_sq = diagonal_sq(fmt)
         
         # Choose if: better ratio, OR (same ratio AND larger diagonal)
         if (ratio_diff < min_ratio_diff or 
-            (ratio_diff <= min_ratio_diff+0.0001 and fmt_diagonal > max_diagonal)):
+            (ratio_diff <= min_ratio_diff+0.0001 and fmt_diagonal_sq > max_diagonal_sq)):
             min_ratio_diff = ratio_diff
-            max_diagonal = fmt_diagonal
+            max_diagonal_sq = fmt_diagonal_sq
             best_format = fmt
     
     return best_format
