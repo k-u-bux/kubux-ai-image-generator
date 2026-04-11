@@ -428,7 +428,7 @@ def generate_image(prompt, width, height, model, steps, reference_strength, neg_
         response = client.images.generate( **params )
         return response.data[0].url
     except Exception as e:
-        message = f"Failed to download image: {e}"
+        message = f"Failed to download image: {e}; promt was: {params}"
         error_callback("API Error", message)
         return None
 
