@@ -1441,13 +1441,16 @@ class ImageGenerator(tk.Tk):
         self._save_all_histories()
         self.generate_button.config(text="Generating...", state="disabled")
         img_width, img_height = self.image_frame.get_dimensions()
-        model_formats = MODEL_SPECS[self.model_index][2]
+        n_steps = self.n_steps
+        model = MODEL_SPECS[self.model_index]
+        model_formats = model[2]
         w, h = select_best_dimensions_from_model(img_width, img_height, model_formats, self.image_scale)
-        threading.Thread(target=self._run_generation_task, args=(prompt, w, h, neg_prompt, context), daemon=True).start()
+        threading.Thread(target=self._run_generation_task, args=(prompt, w, h, neg_prompt, context, model, n_steps), daemon=True).start()
 
-    def _run_generation_task(self, prompt, width, height, neg_prompt, context):
-        image_url = generate_image(prompt, width, height, model = MODEL_SPECS[self.model_index],
-                                   steps = self.n_steps,
+    def _run_generation_task(self, prompt, width, height, neg_prompt, context, the_model, n_steps):
+        image_url = generate_image(prompt, width, height, 
+                                   model = the_model,
+                                   steps = n_steps,
                                    reference_strength = 8,
                                    neg_prompt = neg_prompt,
                                    context = context,
