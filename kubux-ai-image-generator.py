@@ -1482,6 +1482,7 @@ class ImageGenerator(tk.Tk):
                           daemon=True ).start()
 
     def _run_generation_task(self, prompt, width, height, neg_prompt, context, the_model, n_steps, c_str, the_uuid, viewer):
+        save_path = None
         image_url = generate_image(prompt, width, height, 
                                    model = the_model,
                                    steps = n_steps,
