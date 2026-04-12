@@ -12,7 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import copy
 import hashlib
+import uuid
 import json
 import os
 import math
@@ -489,7 +491,7 @@ class FullscreenImageViewer(tk.Toplevel):
     """
     A widget for displaying an image with zooming and panning capabilities.
     """
-    def __init__(self, master, image_path=None, title="change me", start_fullscreen=False):
+    def __init__(self, master, image_path=None, title="change me", start_fullscreen=False, respawn=True):
         """
         Initialize the image viewer.
         
@@ -501,6 +503,7 @@ class FullscreenImageViewer(tk.Toplevel):
         """
         super().__init__(master,class_="kubux-ai-image-generator")
 
+        self.respawn = respawn
         self.image_path = image_path
         self.original_image = None
         self.display_image = None
@@ -569,6 +572,9 @@ class FullscreenImageViewer(tk.Toplevel):
         
         # Set focus to receive key events
         self.canvas.focus_set()
+
+    def clone (self):
+        return FullscreenImageViewer( self.master, self.image_path, self.title(), False, False )
 
     def set_image_path(self, image_path):
         self.image_path = image_path
@@ -739,7 +745,8 @@ class FullscreenImageViewer(tk.Toplevel):
         if self.is_fullscreen:
             self.toggle_fullscreen()
         self.grab_release()
-        self.master.spawn_image_frame()
+        if self.respawn:
+            self.master.spawn_image_frame()
         self.destroy()
         
     def _on_key(self, event):
@@ -1119,6 +1126,8 @@ class ImageGenerator(tk.Tk):
         self.context_history = self._load_history(CONTEXT_HISTORY_FILE)
         self._load_app_settings()
         
+        self.awaiting = []
+
         font_name, font_size = get_linux_system_ui_font_info()
         self.base_font_size = font_size
         self.main_font = tkFont.Font(family=font_name, size=int(self.base_font_size * self.ui_scale))
@@ -1458,16 +1467,20 @@ class ImageGenerator(tk.Tk):
         self._add_to_history(self.neg_prompt_history, neg_prompt)
         self._add_to_history(self.context_history, context)
         self._save_all_histories()
-        self.generate_button.config(text="Generating...", state="disabled")
+        # self.generate_button.config(text="Generating...", state="disabled")
         img_width, img_height = self.image_frame.get_dimensions()
         n_steps = self.n_steps
         c_str = self.context_strength
         model = MODEL_SPECS[self.model_index]
         model_formats = model[2]
         w, h = select_best_dimensions_from_model(img_width, img_height, model_formats, self.image_scale)
-        threading.Thread(target=self._run_generation_task, args=(prompt, w, h, neg_prompt, context, model, n_steps,c_str), daemon=True).start()
+        the_uuid = uuid.uuid4()
+        self.awaiting.append( the_uuid )
+        threading.Thread( target=self._run_generation_task, 
+                          args=(prompt, w, h, neg_prompt, context, model, n_steps, c_str, the_uuid, self.image_frame.clone() ), 
+                          daemon=True ).start()
 
-    def _run_generation_task(self, prompt, width, height, neg_prompt, context, the_model, n_steps, c_str):
+    def _run_generation_task(self, prompt, width, height, neg_prompt, context, the_model, n_steps, c_str, the_uuid, viewer):
         image_url = generate_image(prompt, width, height, 
                                    model = the_model,
                                    steps = n_steps,
@@ -1485,9 +1498,12 @@ class ImageGenerator(tk.Tk):
                                                                                           title=t,
                                                                                           message=m,
                                                                                           font=self.main_font))
+        if the_uuid in self.awaiting:
+            self.awaiting.remove( the_uuid )
             if save_path:
-                self.after(0, self.image_frame.set_image_path, save_path)
-        self.after(0, self.generate_button.config, {'text':"Generate", 'state':"normal"})
+                self.after(0, viewer.set_image_path, save_path)
+        
+        # self.after(0, self.generate_button.config, {'text':"Generate", 'state':"normal"})
 
 
 if __name__ == "__main__":
