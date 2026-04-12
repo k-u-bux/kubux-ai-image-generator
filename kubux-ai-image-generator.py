@@ -1502,7 +1502,9 @@ class ImageGenerator(tk.Tk):
             self.awaiting.remove( the_uuid )
             if save_path:
                 self.after(0, viewer.set_image_path, save_path)
+                return
         
+        self.after(0, viewer._close )
         # self.after(0, self.generate_button.config, {'text':"Generate", 'state':"normal"})
 
 
