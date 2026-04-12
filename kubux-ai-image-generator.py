@@ -1168,6 +1168,7 @@ class ImageGenerator(tk.Tk):
         self.image_win_geometry = self.app_settings.get("image_win_geometry", "1200x800")
         self.n_steps = self.app_settings.get("n_steps", 28)
         self.image_scale = self.app_settings.get("image_scale", 1.0)
+        self.context_strength = self.app_settings.get("context_strength", 6.0)
         self.model_index = self.app_settings.get("model_index", 0 )
         self.sash_pos_top = self.app_settings.get("sash_pos_top", 200)
         self.sash_pos_bot = self.app_settings.get("sash_pos_bot", 400)
@@ -1183,6 +1184,7 @@ class ImageGenerator(tk.Tk):
             self.app_settings["image_win_geometry"] = self.image_frame.geometry()
             self.app_settings["n_steps"] = self.n_steps
             self.app_settings["image_scale"] = self.image_scale
+            self.app_settings["context_strength"] = self.context_strength
             self.app_settings["model_index"] = self.model_index
             self.app_settings["sash_pos_top"] = self.paned_win.sashpos(0)
             self.app_settings["sash_pos_bot"] = self.paned_win.sashpos(1)
@@ -1251,6 +1253,18 @@ class ImageGenerator(tk.Tk):
                 self.scale_slider.set(self.image_scale)
                 self.scale_slider.config(command=self._update_image_scale)
                 self.scale_slider.pack(anchor="w")
+                
+                dummy_D_label = ttk.Label(controls_frame, text="ref:", style='TLabel')
+                dummy_D_label.pack(side="left", padx=(24,0))
+                dummy_D_frame = ttk.Frame(controls_frame)
+                dummy_D_frame.pack(side="left", expand=True, fill="x")
+                
+                self.strength_slider = tk.Scale(
+                    dummy_D_frame, from_=0.0, to=20.0, resolution=0.1, orient="horizontal", showvalue=False
+                )
+                self.strength_slider.set(self.context_strength)
+                self.strength_slider.config(command=self._update_context_strength)
+                self.strength_slider.pack(anchor="w")
                 
                 dummy_C_frame = ttk.Frame(controls_frame)
                 dummy_C_frame.pack(side="right", expand=False, fill="x")
@@ -1344,6 +1358,10 @@ class ImageGenerator(tk.Tk):
 
     def _update_image_scale(self, value):
         self.image_scale = float(value)
+        self.image_frame._update_image()
+
+    def _update_context_strength(self, value):
+        self.context_strength = float(value)
         self.image_frame._update_image()
 
     def _update_n_steps_scale(self, value):
@@ -1443,16 +1461,17 @@ class ImageGenerator(tk.Tk):
         self.generate_button.config(text="Generating...", state="disabled")
         img_width, img_height = self.image_frame.get_dimensions()
         n_steps = self.n_steps
+        c_str = self.context_strength
         model = MODEL_SPECS[self.model_index]
         model_formats = model[2]
         w, h = select_best_dimensions_from_model(img_width, img_height, model_formats, self.image_scale)
-        threading.Thread(target=self._run_generation_task, args=(prompt, w, h, neg_prompt, context, model, n_steps), daemon=True).start()
+        threading.Thread(target=self._run_generation_task, args=(prompt, w, h, neg_prompt, context, model, n_steps,c_str), daemon=True).start()
 
-    def _run_generation_task(self, prompt, width, height, neg_prompt, context, the_model, n_steps):
+    def _run_generation_task(self, prompt, width, height, neg_prompt, context, the_model, n_steps, c_str):
         image_url = generate_image(prompt, width, height, 
                                    model = the_model,
                                    steps = n_steps,
-                                   reference_strength = 8,
+                                   reference_strength = c_str,
                                    neg_prompt = neg_prompt,
                                    context = context,
                                    error_callback=lambda t, m : custom_message_dialog(parent=self,
