@@ -14,7 +14,6 @@
 
 import copy
 import hashlib
-import uuid
 import json
 import os
 import math
@@ -1475,13 +1474,11 @@ class ImageGenerator(tk.Tk):
         model = MODEL_SPECS[self.model_index]
         model_formats = model[2]
         w, h = select_best_dimensions_from_model(img_width, img_height, model_formats, self.image_scale)
-        the_uuid = uuid.uuid4()
-        self.awaiting.append( the_uuid )
         threading.Thread( target=self._run_generation_task, 
-                          args=(prompt, w, h, neg_prompt, context, model, n_steps, c_str, the_uuid, self.image_frame.clone() ), 
+                          args=(prompt, w, h, neg_prompt, context, model, n_steps, c_str, self.image_frame.clone() ), 
                           daemon=True ).start()
 
-    def _run_generation_task(self, prompt, width, height, neg_prompt, context, the_model, n_steps, c_str, the_uuid, viewer):
+    def _run_generation_task(self, prompt, width, height, neg_prompt, context, the_model, n_steps, c_str, viewer):
         save_path = None
         image_url = generate_image(prompt, width, height, 
                                    model = the_model,
@@ -1500,14 +1497,11 @@ class ImageGenerator(tk.Tk):
                                                                                           title=t,
                                                                                           message=m,
                                                                                           font=self.main_font))
-        if the_uuid in self.awaiting:
-            self.awaiting.remove( the_uuid )
-            if save_path:
-                self.after(0, viewer.set_image_path, save_path)
-                return
+        if save_path:
+            self.after(0, viewer.set_image_path, save_path)
+            return
         
         self.after(0, viewer._close )
-        # self.after(0, self.generate_button.config, {'text':"Generate", 'state':"normal"})
 
 
 if __name__ == "__main__":
