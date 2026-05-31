@@ -381,9 +381,9 @@ def generate_image(prompt, width, height, model, steps, reference_strength, neg_
         }
         if model[3]:
             params[ "steps" ] = steps
-        if model[8]:
+        if model[8] and context:
             params[ "reference_images" ] = [ context ]
-        if model[5]:
+        if model[5] and context:
             params[ "image_url" ] = context
         if model[6]:
             params[ "negative_prompt" ] = neg_prompt
