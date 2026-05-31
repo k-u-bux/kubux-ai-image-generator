@@ -12,7 +12,7 @@
         pkgs = nixpkgs.legacyPackages.${system};
         
         # Create the together package using fetchPypi
-        togetherPkg = pkgs.python3Packages.buildPythonPackage rec {
+        togetherPkgOne = pkgs.python3Packages.buildPythonPackage rec {
           pname = "together";
           version = "1.5.35";
           format = "wheel";
@@ -49,13 +49,51 @@
           };
         };
         
+        # Create the together package using fetchPypi
+        togetherPkgTwo = pkgs.python3Packages.buildPythonPackage rec {
+          pname = "together";
+          version = "2.7.0";
+          format = "wheel";
+
+          src = pkgs.fetchPypi {
+            inherit pname version format;
+            sha256 = "sha256-LFV1B7+ZDgKnpKCRTJvKvQnlJCc6Za8Hk/yuRsQyZc4=";
+            dist = "py3";
+            python = "py3";
+          };
+
+          # Dependencies based on together's requirements
+          propagatedBuildInputs = with pkgs.python3Packages; [
+            requests
+            pydantic
+            typing-extensions
+            aiohttp
+            httpx
+            anyio
+            distro
+            sniffio
+            filelock
+            rich
+            tqdm
+          ];
+
+          # Skip tests as they might require API keys
+          doCheck = false;
+
+          meta = with pkgs.lib; {
+            description = "Python client for Together AI API";
+            homepage = "https://pypi.org/project/together/";
+            license = licenses.mit;
+          };
+        };
+
         # Define Python environment with all required packages including together
         pythonEnv = pkgs.python3.withPackages (ps: with ps; [
           tkinter
           pillow
           requests
           python-dotenv
-          togetherPkg
+          togetherPkgOne
         ]);
         
       in

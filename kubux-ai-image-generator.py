@@ -381,7 +381,7 @@ def generate_image(prompt, width, height, model, steps, reference_strength, neg_
         }
         if model[3]:
             params[ "steps" ] = steps
-        if model[8] and not model[5]:
+        if model[8]:
             params[ "reference_images" ] = [ context ]
         if model[5]:
             params[ "image_url" ] = context
@@ -1425,6 +1425,11 @@ class ImageGenerator(tk.Tk):
         if not prompt: return custom_message_dialog(parent=self, title="Input Error", message="Please enter a prompt.",font=self.main_font)
         neg_prompt = self.neg_prompt_text_widget.get("1.0", tk.END).strip()
         context = self.context_text_widget.get("1.0", tk.END).strip()
+        # context = [
+        #     clean_line 
+        #     for line in self.context_text_widget.get("1.0", tk.END).split("\n") 
+        #     if (clean_line := line.strip())
+        # ]
         self._add_to_history(self.prompt_history, prompt)
         self._add_to_history(self.neg_prompt_history, neg_prompt)
         self._add_to_history(self.context_history, context)
