@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48">
+  <!-- tile -->
+  <rect x="2" y="2" width="44" height="44" rx="10" fill="#8E24AA"/>
+  <!-- photo frame -->
+  <rect x="9" y="13" width="30" height="22" rx="3" fill="#FFFFFF"/>
+  <!-- sun -->
+  <circle cx="17" cy="21" r="3" fill="#8E24AA"/>
+  <!-- mountains -->
+  <path d="M 11 33 L 19 24 L 24 29 L 29 22 L 37 33 Z" fill="#8E24AA"/>
+  <!-- sparkles (AI) -->
+  <path d="M 36 8 l 1.2 3 3 1.2 -3 1.2 -1.2 3 -1.2 -3 -3 -1.2 3 -1.2 z" fill="#00C000"/>
+  <path d="M 43 15 l 0.8 2 2 0.8 -2 0.8 -0.8 2 -0.8 -2 -2 -0.8 2 -0.8 z" fill="#00C000"/>
+</svg>
