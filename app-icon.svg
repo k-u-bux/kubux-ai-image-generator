@@ -7,7 +7,7 @@
   <circle cx="17" cy="21" r="3" fill="#8E24AA"/>
   <!-- mountains -->
   <path d="M 11 33 L 19 24 L 24 29 L 29 22 L 37 33 Z" fill="#8E24AA"/>
-  <!-- sparkles (AI): yellow, main on white frame, secondary on tile -->
-  <path d="M 33 14 l 1.8 4.4 4.4 1.8 -4.4 1.8 -1.8 4.4 -1.8 -4.4 -4.4 -1.8 4.4 -1.8 z" fill="#FFD600"/>
-  <path d="M 41.5 7 l 1.4 3.6 3.6 1.4 -3.6 1.4 -1.4 3.6 -1.4 -3.6 -3.6 -1.4 3.6 -1.4 z" fill="#FFD600"/>
+  <!-- sparkles (AI): both yellow on purple tile, above the frame -->
+  <path d="M 41 6 l 1.5 3.7 3.7 1.5 -3.7 1.5 -1.5 3.7 -1.5 -3.7 -3.7 -1.5 3.7 -1.5 z" fill="#FFD600"/>
+  <path d="M 30.5 4.5 l 1.1 2.8 2.8 1.1 -2.8 1.1 -1.1 2.8 -1.1 -2.8 -2.8 -1.1 2.8 -1.1 z" fill="#FFD600"/>
 </svg>
