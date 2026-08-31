@@ -9,3 +9,12 @@ Categories=Graphics;Photography;
 Keywords=wallpaper;AI;generator;background;
 StartupNotify=true
 StartupWMClass=kubux-ai-image-generator
+
+[Desktop Action TogetherAI]
+Name=Kubux AI Image Generator - TogetherAI
+Exec=kubux-ai-image-generator
+
+[Desktop Action OpenRouter]
+Name=Kubux AI Image Generator - OpenRouter
+Exec=kubux-ai-image-generator-or
+

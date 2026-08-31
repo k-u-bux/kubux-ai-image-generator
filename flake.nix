@@ -123,6 +123,10 @@
               --add-flags "$out/bin/kubux-ai-image-generator.py" \
               --set-default TMPDIR "/tmp"
 	    
+            makeWrapper ${pythonEnv}/bin/python $out/bin/kubux-ai-image-generator-or \
+              --add-flags "$out/bin/kubux-ai-image-generator-or.py" \
+              --set-default TMPDIR "/tmp"
+
             # Copy desktop file
             cp kubux-ai-image-generator.desktop $out/share/applications/
 
