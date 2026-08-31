@@ -115,6 +115,7 @@
             # Copy
             cp models.py $out/bin/models.py
             cp kubux-ai-image-generator.py $out/bin/kubux-ai-image-generator.py
+            cp kubux-ai-image-generator-or.py $out/bin/kubux-ai-image-generator-or.py
             chmod +x $out/bin/kubux-ai-image-generator.py
             cp kubux-ai-image-generator.1 $out/share/man/man1/kubux-ai-image-generator.1
 	    
