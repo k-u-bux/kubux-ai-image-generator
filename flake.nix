@@ -115,17 +115,12 @@
             # Copy
             cp models.py $out/bin/models.py
             cp kubux-ai-image-generator.py $out/bin/kubux-ai-image-generator.py
-            cp kubux-ai-image-generator-or.py $out/bin/kubux-ai-image-generator-or.py
             chmod +x $out/bin/kubux-ai-image-generator.py
             cp kubux-ai-image-generator.1 $out/share/man/man1/kubux-ai-image-generator.1
-	    
+
             # Create wrapper using makeWrapper for proper desktop integration
             makeWrapper ${pythonEnv}/bin/python $out/bin/kubux-ai-image-generator \
               --add-flags "$out/bin/kubux-ai-image-generator.py" \
-              --set-default TMPDIR "/tmp"
-	    
-            makeWrapper ${pythonEnv}/bin/python $out/bin/kubux-ai-image-generator-or \
-              --add-flags "$out/bin/kubux-ai-image-generator-or.py" \
               --set-default TMPDIR "/tmp"
 
             # Copy desktop file

@@ -13,6 +13,7 @@
 # limitations under the License.
 
 from models import MODEL_SPECS
+import base64
 import copy
 import hashlib
 import json
@@ -21,6 +22,7 @@ import math
 import platform
 import secrets
 import queue
+import tempfile
 import threading
 import subprocess
 import time
@@ -35,15 +37,21 @@ from tkinter import ttk
 import requests
 from PIL import Image, ImageTk
 from dotenv import load_dotenv
-from together import Together
 from math import sqrt
+
+try:
+    from together import Together
+except ImportError:
+    Together = None
 
 # Load environment variables
 load_dotenv()
 
 # --- Configuration ---
 TOGETHER_API_KEY = os.getenv("TOGETHER_API_KEY")
-ai_features_enabled = bool(TOGETHER_API_KEY)
+OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
+ai_features_enabled = bool(TOGETHER_API_KEY or OPENROUTER_API_KEY)
+OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
 
 def ratio ( p ):
     return p[0]/p[1]
@@ -366,10 +374,55 @@ def custom_message_dialog(parent, title, message, font=("Arial", 12)):
     dialog.wait_window()
 
     
-# --- Together.ai Image Generation ---
+# --- Image Generation ---
 
-def generate_image(prompt, width, height, model, steps, reference_strength, neg_prompt, context,
-                   error_callback=fallback_show_error):
+def _decode_data_url(data_url, error_callback):
+    """Decode a data:...;base64,... URL into a temporary file and return its path."""
+    try:
+        header, payload = data_url.split(",", 1)
+        image_bytes = base64.b64decode(payload)
+        suffix = ".png"
+        if "jpeg" in header or "jpg" in header:
+            suffix = ".jpg"
+        elif "webp" in header:
+            suffix = ".webp"
+        tmp_path = os.path.join(tempfile.gettempdir(), f"or_image_{secrets.token_urlsafe(12).replace('/', '_')}{suffix}")
+        with open(tmp_path, "wb") as f:
+            f.write(image_bytes)
+        return tmp_path
+    except Exception as e:
+        error_callback("Decode Error", f"Failed to decode base64 image: {e}")
+        return None
+
+def _openrouter_headers():
+    return {
+        "Authorization": f"Bearer {OPENROUTER_API_KEY}",
+        "Content-Type": "application/json",
+    }
+
+def _generate_via_images_endpoint(payload, error_callback):
+    """POST to /images (OpenRouter Image API). Returns URL, local path, or None."""
+    try:
+        response = requests.post(
+            f"{OPENROUTER_BASE_URL}/images",
+            headers=_openrouter_headers(),
+            json=payload,
+            timeout=300,
+        )
+        response.raise_for_status()
+        data = response.json()["data"][0]
+        if "url" in data and data["url"]:
+            return data["url"]
+        if "b64_json" in data and data["b64_json"]:
+            return _decode_data_url(f"data:image/png;base64,{data['b64_json']}", error_callback)
+        error_callback("API Error", f"OpenRouter returned no image: {data}")
+        return None
+    except Exception as e:
+        error_callback("API Error", f"Failed to generate image: {e}; request was: {payload}")
+        return None
+
+def _generate_via_together(prompt, width, height, model, steps, reference_strength, neg_prompt, context,
+                           error_callback):
     client = Together(api_key=TOGETHER_API_KEY)
     try:
         params = {
@@ -396,20 +449,87 @@ def generate_image(prompt, width, height, model, steps, reference_strength, neg_
         error_callback("API Error", message)
         return None
 
+def _pixels_to_aspect_ratio(width, height):
+    """Convert pixel dimensions to the closest common aspect ratio string."""
+    from math import gcd
+    g = gcd(width, height)
+    w = width // g
+    h = height // g
+    # Reduce large ratios to common equivalents
+    common_ratios = [
+        (1, 1), (4, 3), (3, 4), (3, 2), (2, 3),
+        (16, 9), (9, 16), (21, 9), (4, 5), (5, 4),
+        (1, 2), (2, 1), (1, 4), (4, 1), (1, 8), (8, 1),
+        (9, 20), (20, 9), (9, 21), (21, 9),
+    ]
+    # Find the closest common ratio
+    target = width / height
+    best = (1, 1)
+    best_diff = float('inf')
+    for rw, rh in common_ratios:
+        diff = abs(rw / rh - target)
+        if diff < best_diff:
+            best_diff = diff
+            best = (rw, rh)
+    # Use the common ratio if it's close enough, otherwise use the reduced form
+    if best_diff < 0.02:
+        return f"{best[0]}:{best[1]}"
+    return f"{w}:{h}"
+
+def _generate_via_openrouter(prompt, width, height, model, steps, reference_strength, neg_prompt, context,
+                             error_callback):
+    params = {
+        "prompt" : prompt,
+        "model" : model[1],
+        "aspect_ratio" : _pixels_to_aspect_ratio(width, height),
+    }
+    if model[6] and neg_prompt:
+        params[ "negative_prompt" ] = neg_prompt
+    return _generate_via_images_endpoint(params, error_callback)
+
+def generate_image(prompt, width, height, model, steps, reference_strength, neg_prompt, context,
+                   error_callback=fallback_show_error):
+    provider = model[9]
+    if provider == "together":
+        return _generate_via_together(prompt, width, height, model, steps,
+                                     reference_strength, neg_prompt, context, error_callback)
+    elif provider == "openrouter":
+        return _generate_via_openrouter(prompt, width, height, model, steps,
+                                        reference_strength, neg_prompt, context, error_callback)
+    else:
+        error_callback("Configuration Error", f"Unknown provider: {provider}")
+        return None
+
 def download_image(url, file_name, prompt, neg_prompt, context, download_dir,
                    error_callback=fallback_show_error):
     key = f"{[ prompt, neg_prompt, context]}"
     prompt_dir = hashlib.sha256(key.encode('utf-8')).hexdigest()
     save_path = os.path.join(download_dir, prompt_dir, file_name)
     tmp_save_path = save_path + "-tmp"
+    dir_name = os.path.dirname(save_path)
+    os.makedirs(dir_name, exist_ok=True)
     try:
-        response = requests.get(url, stream=True)
-        response.raise_for_status() 
-        dir_name = os.path.dirname(save_path)
-        os.makedirs(dir_name, exist_ok=True)
-        with open(tmp_save_path, 'wb') as f:
-            for chunk in response.iter_content(chunk_size=8192): f.write(chunk)
-        os.replace(tmp_save_path, save_path)
+        if url.startswith("data:"):
+            # inline base64 payload (already decoded upstream in some paths)
+            header, payload = url.split(",", 1)
+            with open(tmp_save_path, 'wb') as f:
+                f.write(base64.b64decode(payload))
+            os.replace(tmp_save_path, save_path)
+        elif os.path.isfile(url):
+            # generate_image saved a local temporary file (b64_json result)
+            with open(url, 'rb') as src_file, open(tmp_save_path, 'wb') as f:
+                while True:
+                    chunk = src_file.read(8192)
+                    if not chunk:
+                        break
+                    f.write(chunk)
+            os.replace(tmp_save_path, save_path)
+        else:
+            response = requests.get(url, stream=True)
+            response.raise_for_status() 
+            with open(tmp_save_path, 'wb') as f:
+                for chunk in response.iter_content(chunk_size=8192): f.write(chunk)
+            os.replace(tmp_save_path, save_path)
 
         def write_info(info_file, info):
             info_path = os.path.join( dir_name, info_file)
@@ -1096,6 +1216,7 @@ class ImageGenerator(tk.Tk):
         self.geometry(self.main_win_geometry)
 
         self._create_widgets()
+        self._set_model_index(self.model_index)
         self.update_idletasks()
         
         self.protocol("WM_DELETE_WINDOW", self._on_closing)
@@ -1141,6 +1262,14 @@ class ImageGenerator(tk.Tk):
         self.image_scale = self.app_settings.get("image_scale", 1.0)
         self.context_strength = self.app_settings.get("context_strength", 6.0)
         self.model_index = self.app_settings.get("model_index", 0 )
+        # Guard: if the saved model_index points to a model whose API key
+        # is missing, fall back to the first available model.
+        provider_keys = {"together": TOGETHER_API_KEY, "openrouter": OPENROUTER_API_KEY}
+        if self.model_index >= len(MODEL_SPECS) or not provider_keys.get(MODEL_SPECS[self.model_index][9]):
+            for i, m in enumerate(MODEL_SPECS):
+                if provider_keys.get(m[9]):
+                    self.model_index = i
+                    break
         self.sash_pos_top = self.app_settings.get("sash_pos_top", 200)
         self.sash_pos_bot = self.app_settings.get("sash_pos_bot", 400)
         
@@ -1157,8 +1286,11 @@ class ImageGenerator(tk.Tk):
             self.app_settings["image_scale"] = self.image_scale
             self.app_settings["context_strength"] = self.context_strength
             self.app_settings["model_index"] = self.model_index
-            self.app_settings["sash_pos_top"] = self.paned_win.sashpos(0)
-            self.app_settings["sash_pos_bot"] = self.paned_win.sashpos(1)
+            num_sashes = len(self.paned_win.panes()) - 1
+            if num_sashes > 0:
+                self.app_settings["sash_pos_top"] = self.paned_win.sashpos(0)
+            if num_sashes > 1:
+                self.app_settings["sash_pos_bot"] = self.paned_win.sashpos(1)
 
             with open(APP_SETTINGS_FILE, 'w') as f:
                 json.dump(self.app_settings, f, indent=4)
@@ -1189,8 +1321,34 @@ class ImageGenerator(tk.Tk):
             self.model_menubutton = ttk.Menubutton(model_frame, text=MODEL_SPECS[self.model_index][0], style='TMenubutton')
             model_menu = tk.Menu(self.model_menubutton, font=self.main_font)  # Menu cannot be replaced with ttk
             self.model_menubutton.config(menu=model_menu)
+
+            # Build cascading menu: Provider → Vendor → Model
+            # Filter out models whose API key is missing
+            provider_labels = {"together": "Together.ai", "openrouter": "OpenRouter"}
+            provider_keys = {"together": TOGETHER_API_KEY, "openrouter": OPENROUTER_API_KEY}
+
+            # Group available models by provider → vendor
+            available = {}
             for i, model in enumerate(MODEL_SPECS):
-                model_menu.add_command(label=model[0], command=lambda idx = i : self._set_model_index(idx))
+                provider = model[9]
+                if not provider_keys.get(provider):
+                    continue
+                if provider not in available:
+                    available[provider] = {}
+                vendor = model[1].split("/")[0]
+                if vendor not in available[provider]:
+                    available[provider][vendor] = []
+                available[provider][vendor].append((i, model))
+
+            for provider in sorted(available.keys()):
+                provider_menu = tk.Menu(model_menu, font=self.main_font, tearoff=0)
+                model_menu.add_cascade(label=provider_labels.get(provider, provider), menu=provider_menu)
+                for vendor in sorted(available[provider].keys()):
+                    vendor_menu = tk.Menu(provider_menu, font=self.main_font, tearoff=0)
+                    provider_menu.add_cascade(label=vendor, menu=vendor_menu)
+                    for i, model in available[provider][vendor]:
+                        vendor_menu.add_command(label=model[0], command=lambda idx = i : self._set_model_index(idx))
+
             self.model_menubutton.pack(side="left", fill="x", expand=True, padx=(2,2), pady=(5,5))
         if True:
             controls_frame = ttk.Frame(self.main_container)
@@ -1201,8 +1359,10 @@ class ImageGenerator(tk.Tk):
                 self.generate_button = ttk.Button(dummy_G_frame, text="Generate", style='TButton', command=self._on_generate_button_click)
                 self.generate_button.pack(side="left", padx=(2,0))
                 dummy_A_label = ttk.Label(controls_frame, text="# steps:", style='TLabel')
-                dummy_A_label.pack(side="left", padx=(24,0))
-                dummy_A_frame = ttk.Frame(controls_frame)
+                self.steps_container = ttk.Frame(controls_frame)
+                self.steps_container.pack(side="left", expand=True, fill="x")
+                dummy_A_label.pack(in_=self.steps_container, side="left", padx=(24,0))
+                dummy_A_frame = ttk.Frame(self.steps_container)
                 dummy_A_frame.pack(side="left", expand=True, fill="x")
                 
                 # ttk doesn't have Scale with showvalue; using a workaround
@@ -1226,8 +1386,10 @@ class ImageGenerator(tk.Tk):
                 self.scale_slider.pack(anchor="w")
                 
                 dummy_D_label = ttk.Label(controls_frame, text="ref:", style='TLabel')
-                dummy_D_label.pack(side="left", padx=(24,0))
-                dummy_D_frame = ttk.Frame(controls_frame)
+                self.ref_container = ttk.Frame(controls_frame)
+                self.ref_container.pack(side="left", expand=True, fill="x")
+                dummy_D_label.pack(in_=self.ref_container, side="left", padx=(24,0))
+                dummy_D_frame = ttk.Frame(self.ref_container)
                 dummy_D_frame.pack(side="left", expand=True, fill="x")
                 
                 self.strength_slider = tk.Scale(
@@ -1283,11 +1445,11 @@ class ImageGenerator(tk.Tk):
             if True:
                 neg_prompt_button = ttk.Button(self, text="Negative Prompt", style='TButton',
                                               command=self._select_from_neg_prompt_history)
-                neg_prompt_frame_outer = ttk.LabelFrame(self.paned_win, labelwidget=neg_prompt_button)
+                self.neg_prompt_frame_outer = ttk.LabelFrame(self.paned_win, labelwidget=neg_prompt_button)
                 # Setting the minimum size for the pane
-                neg_prompt_frame_outer.configure(height=200)
-                self.paned_win.add(neg_prompt_frame_outer, weight=1)
-                neg_prompt_frame_inner = ttk.Frame(neg_prompt_frame_outer)
+                self.neg_prompt_frame_outer.configure(height=200)
+                self.paned_win.add(self.neg_prompt_frame_outer, weight=1)
+                neg_prompt_frame_inner = ttk.Frame(self.neg_prompt_frame_outer)
                 neg_prompt_frame_inner.pack(fill="both", expand=True, padx=5, pady=5)
                 
                 self.neg_prompt_text_widget = tk.Text(neg_prompt_frame_inner, wrap="word", relief="sunken", borderwidth=2, font=self.main_font)
@@ -1341,7 +1503,30 @@ class ImageGenerator(tk.Tk):
         
     def _set_model_index(self, index):
         self.model_index = index;
-        self.model_menubutton.config( text=MODEL_SPECS[self.model_index][0] )
+        model = MODEL_SPECS[self.model_index]
+        provider_labels = {"together": "Together.ai", "openrouter": "OpenRouter"}
+        vendor = model[1].split("/")[0]
+        provider_label = provider_labels.get(model[9], model[9])
+        path_label = f"{provider_label} \u203a {vendor} \u203a {model[0]}"
+        self.model_menubutton.config( text=path_label )
+        # Adaptive slider visibility based on model capabilities
+        if model[3]:  # supports_steps
+            self.steps_container.pack(side="left", expand=True, fill="x")
+            lo, hi = model[4] if model[4] else (1, 64)
+            self.steps_slider.config(from_=lo, to=hi)
+        else:
+            self.steps_container.pack_forget()
+        if model[7]:  # supports_reference_strength
+            self.ref_container.pack(side="left", expand=True, fill="x")
+        else:
+            self.ref_container.pack_forget()
+        if model[6]:  # supports_negative_prompt
+            if str(self.neg_prompt_frame_outer) not in self.paned_win.panes():
+                self.paned_win.add(self.neg_prompt_frame_outer, weight=1)
+        else:
+            if str(self.neg_prompt_frame_outer) in self.paned_win.panes():
+                self.paned_win.forget(self.neg_prompt_frame_outer)
+        self._save_app_settings()
         self.image_frame._update_image()
         
     def _do_update_ui_scale(self, scale_factor):
