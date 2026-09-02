@@ -1420,7 +1420,7 @@ class ImageGenerator(tk.Tk):
                 self.main_container,
                 on_navigate_callback=self._update_download_dir
             )
-            self.navigator.pack(side="bottom", fill="x", expand=True, padx=5)            
+            self.navigator.pack(side="bottom", fill="x", expand=False, padx=5)            
             self.navigator.set_path(self.download_dir)
             
         if True:
