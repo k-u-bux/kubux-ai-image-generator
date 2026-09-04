@@ -1434,6 +1434,7 @@ class ImageGenerator(tk.Tk):
                 # Setting the minimum size for the pane
                 prompt_frame_outer.configure(height=200)
                 self.paned_win.add(prompt_frame_outer, weight=1)
+                self.prompt_frame_outer = prompt_frame_outer
                 prompt_frame_inner = ttk.Frame(prompt_frame_outer)
                 prompt_frame_inner.pack(fill="both", expand=True, padx=5, pady=5)
                 
@@ -1461,6 +1462,8 @@ class ImageGenerator(tk.Tk):
                 # Setting the minimum size for the pane
                 context_frame_outer.configure(height=200)
                 self.paned_win.add(context_frame_outer, weight=1)
+                self.context_frame_outer = context_frame_outer
+                self.context_button = context_button
                 context_frame_inner = ttk.Frame(context_frame_outer)
                 context_frame_inner.pack(fill="both", expand=True, padx=5, pady=5)
                 
@@ -1519,15 +1522,96 @@ class ImageGenerator(tk.Tk):
             self.ref_container.pack(side="left", expand=True, fill="x")
         else:
             self.ref_container.pack_forget()
+        # --- Adaptive prompt panes (negative prompt) ---
+        # ttk.PanedWindow forget()+add() re-appends the pane at the END of the
+        # child list, which would slide the Image URL pane above the Negative
+        # Prompt pane. Re-insert at index 1 so the visual order always stays
+        # [positive, negative, URL]. Then, if the *set* of visible prompt panes
+        # changed, reset the pane allocation to the canonical layout.
+        set_before = self._visible_prompt_set()
         if model[6]:  # supports_negative_prompt
             if str(self.neg_prompt_frame_outer) not in self.paned_win.panes():
                 self.paned_win.add(self.neg_prompt_frame_outer, weight=1)
+                try:
+                    self.paned_win.tk.call(
+                        self.paned_win._w, "insert", 1, self.neg_prompt_frame_outer._w)
+                except tk.TclError:
+                    pass
         else:
             if str(self.neg_prompt_frame_outer) in self.paned_win.panes():
                 self.paned_win.forget(self.neg_prompt_frame_outer)
+        if set_before != self._visible_prompt_set():
+            self._apply_prompt_pane_allocation()
         self._save_app_settings()
         self.image_frame._update_image()
         
+    def _visible_prompt_set(self):
+        """Frozenset of the currently shown prompt panes (by widget path)."""
+        panes = set(self.paned_win.panes())
+        return frozenset(
+            str(f) for f in (self.prompt_frame_outer,
+                             self.neg_prompt_frame_outer,
+                             self.context_frame_outer)
+            if str(f) in panes
+        )
+
+    def _apply_prompt_pane_allocation(self):
+        """Reset the paned-window sash positions to the canonical layout.
+
+        Used when the *set* of visible prompt panes changes (e.g. the model
+        does / does not support a negative prompt). Order is always
+        [positive, negative, Image URL]. The Image URL pane gets about one
+        line of text; the remaining height is split 2:1 in favour of the
+        positive prompt (2/3 positive, 1/3 negative).
+        """
+        self.update_idletasks()
+        total = self.paned_win.winfo_height()
+        if total <= 1:
+            # Not laid out yet (startup) -- retry once the window is mapped.
+            self.after(50, self._apply_prompt_pane_allocation)
+            return
+        sash_thickness = 10  # from 'Sash.TPanedwindow' style
+        prompt_panes = (self.prompt_frame_outer,
+                        self.neg_prompt_frame_outer,
+                        self.context_frame_outer)
+        visible = [f for f in prompt_panes if str(f) in self.paned_win.panes()]
+        n = len(visible)
+        if n < 2:
+            return  # a single pane fills the window; nothing to allocate
+
+        # One line of text for the Image URL pane: label height + one text
+        # line + borders and padding.
+        line_h = max(self.main_font.metrics("linespace"), 10)
+        label_h = self.context_button.winfo_reqheight() if hasattr(self, 'context_button') else 0
+        url_h = int(label_h + line_h + 22)
+
+        # Height available for the prompt panes, after the URL line and sashes.
+        sash_space = (n - 1) * sash_thickness
+        remainder = total - url_h - sash_space
+
+        heights = {}
+        prompt_only = [f for f in visible if f is not self.context_frame_outer]
+        if len(prompt_only) == 2:
+            pos_h = int(2 * remainder / 3)
+            heights[self.prompt_frame_outer] = pos_h
+            heights[self.neg_prompt_frame_outer] = remainder - pos_h
+            if self.context_frame_outer in visible:
+                heights[self.context_frame_outer] = url_h
+        else:
+            # Two panes (positive + URL): URL still one line, rest to positive.
+            if self.context_frame_outer in visible:
+                heights[self.prompt_frame_outer] = remainder
+                heights[self.context_frame_outer] = url_h
+            else:
+                heights[self.prompt_frame_outer] = remainder
+
+        # Apply sashes in top-to-bottom order.
+        acc = 0
+        for i in range(n - 1):
+            acc += heights.get(visible[i], 0)
+            self.paned_win.sashpos(i, acc)
+            acc += sash_thickness
+
     def _do_update_ui_scale(self, scale_factor):
         self.ui_scale = scale_factor
         new_size = int(self.base_font_size * scale_factor)
