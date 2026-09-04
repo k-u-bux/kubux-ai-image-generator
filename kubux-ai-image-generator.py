@@ -1430,12 +1430,14 @@ class ImageGenerator(tk.Tk):
             if True:
                 prompt_button = ttk.Button(self, text="Image Prompt", style='TButton',
                                            command=self._select_from_prompt_history)
+                self.prompt_button = prompt_button
                 prompt_frame_outer = ttk.LabelFrame(self.paned_win, labelwidget=prompt_button)
                 # Setting the minimum size for the pane
                 prompt_frame_outer.configure(height=200)
                 self.paned_win.add(prompt_frame_outer, weight=1)
                 self.prompt_frame_outer = prompt_frame_outer
                 prompt_frame_inner = ttk.Frame(prompt_frame_outer)
+                self.prompt_frame_inner = prompt_frame_inner
                 prompt_frame_inner.pack(fill="both", expand=True, padx=5, pady=5)
                 
                 # ttk doesn't have Text widget, using tk.Text is necessary
@@ -1445,11 +1447,13 @@ class ImageGenerator(tk.Tk):
             if True:
                 neg_prompt_button = ttk.Button(self, text="Negative Prompt", style='TButton',
                                               command=self._select_from_neg_prompt_history)
+                self.neg_prompt_button = neg_prompt_button
                 self.neg_prompt_frame_outer = ttk.LabelFrame(self.paned_win, labelwidget=neg_prompt_button)
                 # Setting the minimum size for the pane
                 self.neg_prompt_frame_outer.configure(height=200)
                 self.paned_win.add(self.neg_prompt_frame_outer, weight=1)
                 neg_prompt_frame_inner = ttk.Frame(self.neg_prompt_frame_outer)
+                self.neg_prompt_frame_inner = neg_prompt_frame_inner
                 neg_prompt_frame_inner.pack(fill="both", expand=True, padx=5, pady=5)
                 
                 self.neg_prompt_text_widget = tk.Text(neg_prompt_frame_inner, wrap="word", relief="sunken", borderwidth=2, font=self.main_font)
@@ -1458,18 +1462,46 @@ class ImageGenerator(tk.Tk):
             if True:
                 context_button = ttk.Button(self, text="Image URL (context)", style='TButton',
                                             command=self._select_from_context_history)
+                self.context_button = context_button
                 context_frame_outer = ttk.LabelFrame(self.paned_win, labelwidget=context_button)
                 # Setting the minimum size for the pane
                 context_frame_outer.configure(height=200)
                 self.paned_win.add(context_frame_outer, weight=1)
                 self.context_frame_outer = context_frame_outer
-                self.context_button = context_button
                 context_frame_inner = ttk.Frame(context_frame_outer)
+                self.context_frame_inner = context_frame_inner
                 context_frame_inner.pack(fill="both", expand=True, padx=5, pady=5)
                 
                 self.context_text_widget = tk.Text(context_frame_inner, wrap="word", relief="sunken", borderwidth=2, font=self.main_font)
                 self.context_text_widget.pack(fill="both", expand=True)
 
+            # Make the sashes grabbable. ttk only drags a sash when the press
+            # lands inside the ~5px gap it leaves between panes, and clicks on
+            # the prompt panes themselves never reach the panedwindow. Worse,
+            # the FullscreenImageViewer Toplevel is mapped over the main
+            # window, so presses over the sashes often land on its canvas, not
+            # on the panes. Bind the drag handlers app-wide (bind_all) AND on
+            # every prompt-pane widget, so a press within
+            # +/- self._sash_grab_pad px of a sash starts a drag no matter
+            # which window/widget receives the click.
+            self._sash_grab_pad = 30
+            self._sash_dragging = False
+            self._sash_drag_index = None
+            self._sash_press_y = None
+            self._sash_press_pos = None
+            for w in [self.paned_win] + self._prompt_pane_widgets():
+                w.bind("<Button-1>", self._sash_press)
+                w.bind("<B1-Motion>", self._sash_drag)
+                w.bind("<ButtonRelease-1>", self._sash_release)
+            # App-wide net: catches presses that land on other widgets/windows
+            # (e.g. the image viewer canvas stacked over the main window).
+            self.bind_all("<Button-1>", self._sash_press, add="+")
+            self.bind_all("<B1-Motion>", self._sash_drag, add="+")
+            self.bind_all("<ButtonRelease-1>", self._sash_release, add="+")
+            self.paned_win.bind("<Motion>", self._sash_motion)
+            self.paned_win.bind("<Leave>", self._sash_leave)
+            self.bind_all("<Motion>", self._sash_motion, add="+")
+            self.bind_all("<Leave>", self._sash_leave, add="+")
 
         self.update_idletasks()
         self.paned_win.sashpos( 0, self.sash_pos_top )
@@ -1545,6 +1577,62 @@ class ImageGenerator(tk.Tk):
         self._save_app_settings()
         self.image_frame._update_image()
         
+    def _prompt_pane_widgets(self):
+        """Every widget that makes up the prompt panes. A press on any of
+        these must be able to start a sash drag when it lands close to a
+        separator."""
+        return [self.prompt_frame_outer, self.neg_prompt_frame_outer,
+                self.context_frame_outer,
+                self.prompt_frame_inner, self.neg_prompt_frame_inner,
+                self.context_frame_inner,
+                self.prompt_text_widget, self.neg_prompt_text_widget,
+                self.context_text_widget,
+                self.prompt_button, self.neg_prompt_button,
+                self.context_button]
+
+    def _sash_y(self, event):
+        """Translate an event's y coordinate into panedwindow space."""
+        return event.y_root - self.paned_win.winfo_rooty()
+
+    def _sash_at(self, y):
+        """Index of the sash whose extended grab region contains y, or None."""
+        for i in range(len(self.paned_win.panes()) - 1):
+            if abs(y - self.paned_win.sashpos(i)) <= self._sash_grab_pad:
+                return i
+        return None
+
+    def _sash_press(self, event):
+        y = self._sash_y(event)
+        idx = self._sash_at(y)
+        if idx is None:
+            return None  # normal widget behaviour (text cursor, button, ...)
+        self._sash_dragging = True
+        self._sash_drag_index = idx
+        self._sash_press_y = y
+        self._sash_press_pos = self.paned_win.sashpos(idx)
+        return "break"  # stop the pane widget from also handling the click
+
+    def _sash_drag(self, event):
+        if not self._sash_dragging or self._sash_drag_index is None:
+            return None
+        self.paned_win.sashpos(self._sash_drag_index,
+                               self._sash_press_pos + (self._sash_y(event) - self._sash_press_y))
+
+    def _sash_release(self, event):
+        self._sash_dragging = False
+        self._sash_drag_index = None
+        self._sash_press_y = None
+        self._sash_press_pos = None
+
+    def _sash_motion(self, event):
+        if self._sash_at(self._sash_y(event)) is not None:
+            self.paned_win.configure(cursor="sb_v_double_arrow")
+        else:
+            self.paned_win.configure(cursor="")
+
+    def _sash_leave(self, event):
+        self.paned_win.configure(cursor="")
+
     def _visible_prompt_set(self):
         """Frozenset of the currently shown prompt panes (by widget path)."""
         panes = set(self.paned_win.panes())
@@ -1570,7 +1658,6 @@ class ImageGenerator(tk.Tk):
             # Not laid out yet (startup) -- retry once the window is mapped.
             self.after(50, self._apply_prompt_pane_allocation)
             return
-        sash_thickness = 10  # from 'Sash.TPanedwindow' style
         prompt_panes = (self.prompt_frame_outer,
                         self.neg_prompt_frame_outer,
                         self.context_frame_outer)
@@ -1585,8 +1672,10 @@ class ImageGenerator(tk.Tk):
         label_h = self.context_button.winfo_reqheight() if hasattr(self, 'context_button') else 0
         url_h = int(label_h + line_h + 22)
 
-        # Height available for the prompt panes, after the URL line and sashes.
-        sash_space = (n - 1) * sash_thickness
+        # Height available for the prompt panes, after the URL line and the
+        # panedwindow's fixed ~5px gaps between panes (the visible sash bar is
+        # drawn on top of that gap by the style, but the gap itself is 5px).
+        sash_space = (n - 1) * 5
         remainder = total - url_h - sash_space
 
         heights = {}
@@ -1610,7 +1699,7 @@ class ImageGenerator(tk.Tk):
         for i in range(n - 1):
             acc += heights.get(visible[i], 0)
             self.paned_win.sashpos(i, acc)
-            acc += sash_thickness
+            acc += 5
 
     def _do_update_ui_scale(self, scale_factor):
         self.ui_scale = scale_factor
